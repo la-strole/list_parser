@@ -52,6 +52,7 @@ def get_links_and_dates_for_items(
     date_update is isoformat string.
     """
     # Add random delay.
+    logger.debug("Frozen with sleep time")
     time.sleep(random.randint(1, 5))
     # Get page.
     if referer_header:
@@ -60,12 +61,6 @@ def get_links_and_dates_for_items(
         )
     else:
         response = session.get(url, params=get_params)
-
-    logger.info("response.status_code\n %s", response.status_code)
-    logger.debug("response.headers\n %s", response.headers)
-    logger.debug("response.request.headers\n %s", response.request.headers)
-    logger.debug("response.cookies\n %s", response.cookies)
-    # logger.debug("response.text\n %s", response.text)
 
     if response.status_code == 200:
 
@@ -99,7 +94,10 @@ def get_links_and_dates_for_items(
                         }
                     )
 
-            logger.debug("Advertisment list = %s", item_page_list)
+            logger.debug(
+                "get_links_and_dates_for_items returns Advertisment list = %s",
+                item_page_list,
+            )
 
             return (
                 item_page_list,
@@ -115,7 +113,9 @@ def get_links_and_dates_for_items(
         return None
 
 
-def get_candidates_hrefs(session: requests.Session, get_params: Dict[str, str]) -> list:
+def get_candidates_hrefs(
+    session: requests.Session, get_params: Dict[str, str]
+) -> list | None:
     """
     Collect candidate hrefs with date_update larger than latest db date.
     """
@@ -128,22 +128,31 @@ def get_candidates_hrefs(session: requests.Session, get_params: Dict[str, str]) 
     page_number = 1
     referer_header = ""
     url = URL
-    while True:
-        # Get items from the page.
-        result = get_links_and_dates_for_items(
-            session, get_params, latest_db_date, url, referer_header
-        )
-        items_list = result[0]
-        # Extend candidate list.
-        candidate_list.extend(items_list)
-        # If all items from the page added to candidate list - go to the next page.
-        if result[1]:
-            page_number += 1
-            referer_header = result[2]
-            url = f"{URL}/{page_number}"
-        else:
-            break
+    try:
+        while True:
+            # Get items from the page.
+            result = get_links_and_dates_for_items(
+                session, get_params, latest_db_date, url, referer_header
+            )
+            assert (
+                result
+            ), f"get_candidates_hrefs: get_links_and_dates_for_items returns None. url = {url}"
+            items_list = result[0]
+            # Extend candidate list.
+            candidate_list.extend(items_list)
+            # If all items from the page added to candidate list - go to the next page.
+            if result[1]:
+                page_number += 1
+                referer_header = result[2]
+                url = f"{URL}/{page_number}"
+            else:
+                break
 
+    except AssertionError as e:
+        logger.error("get_candidates_hrefs: %s", e)
+        return None
+
+    logger.debug("get_candidates_hrefs returns %s", candidate_list)
     return candidate_list
 
 
@@ -155,6 +164,7 @@ def get_info_for_each_item(session: requests.Session, links_list: list) -> list 
     # Navigate to the item in links list.
     for link in links_list:
         # Add random pause before requesting.
+        logger.debug("Frozen with sleep time")
         time.sleep(random.randint(1, 15))
         response = session.get(
             url=link,
@@ -221,7 +231,8 @@ def get_info_for_each_item(session: requests.Session, links_list: list) -> list 
 
             # Normalize the house_info_dict
             house_info_dict = {
-                normalization_validation.valid_keys[k]: v for k, v in house_info.items()
+                normalization_validation.valid_keys[k]: v
+                for k, v in house_info_dict.items()
             }
             result.append(house_info_dict)
 
@@ -229,6 +240,7 @@ def get_info_for_each_item(session: requests.Session, links_list: list) -> list 
             logger.error("Get house info error %s", e)
             break
     else:
+        logger.debug("get_info_for_each_item returns %s", result)
         return result
 
 
@@ -248,15 +260,21 @@ def list_am_scrapper(get_params: Dict[str, str]):
 
             # Update headers with fake headers.
             session.headers.update(headers)
+            logger.debug("Update html headers with fake headers")
 
             # Get candidates list to go to the each item link.
             candidate_list = get_candidates_hrefs(session, get_params)
+            assert (
+                candidate_list
+            ), "list_am_scrapper: candidate_list is empty. get_candidates_hrefs returns None"
 
             # Get candidates list properties to add to the database.
             database_rows = get_info_for_each_item(
                 session, [i["href"] for i in candidate_list]
             )
-            # TODO add assaerts for None value
+            assert (
+                database_rows
+            ), "list_am_scrapper: Database rows are empty. get_info_for_each_item returns None"
 
             # Write info to the database.
 

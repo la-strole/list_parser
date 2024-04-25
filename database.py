@@ -58,14 +58,14 @@ def populate_database(
         ).fetchone()
         if row:
             # Update database row
-            con.execute(
+            cur.execute(
                 """
                         UPDATE advertisement 
                         SET id = :id, image_href = :image_href, title = :title, price_value = :price_value, 
                         currancy = :currancy, description = :description, 
                         date_posted = :date_posted , date_updated = :date_updated, location = :location, 
                         agent_status = :agent_status, user_link = :user_link, 
-                        appliances = :appliences, garage = :garage, rooms_count = :room_count, 
+                        appliances = :appliances, garage = :garage, rooms_count = :rooms_count, 
                         toilet_count = :toilet_count, utility_bills_included = :utility_bills_included, 
                         furniture = :furniture, children_allowed = :children_allowed, 
                         animals_allowed = :animals_allowed, total_area = :total_area, land_area = :land_area, 
@@ -75,10 +75,11 @@ def populate_database(
                         """,
                 database_row.model_dump(),
             )
+            con.commit()
             logger.debug("Update database row")
         else:
             # Insert database row
-            con.execute(
+            cur.execute(
                 """
                         INSERT INTO advertisement 
                         (id, image_href, title, price_value, currancy, description, 
@@ -93,3 +94,5 @@ def populate_database(
                         :appartment_state, :type, :building_type, :facilities, :floors_count)""",
                 database_row.model_dump(),
             )
+            con.commit()
+            logger.debug("Insert row to database")
