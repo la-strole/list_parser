@@ -6,7 +6,7 @@ import logging
 import random
 import re
 import time
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 import requests
 from bs4 import BeautifulSoup
@@ -39,11 +39,11 @@ headers = {
 
 def get_links_and_dates_for_items(
     session: requests.Session,
-    get_params: dict[str:str],
+    get_params: Dict[str, str],
     latest_db_date: str,
     url=URL,
     referer_header="",
-) -> Tuple[List[dict[str:str]], bool, str] | None:
+) -> Tuple[List[Dict[str, str]], bool, str] | None:
     """
     Get the list of items from list.am and add it to the final list
     if date updated is later than db_last_date.
@@ -115,7 +115,7 @@ def get_links_and_dates_for_items(
         return None
 
 
-def get_candidates_hrefs(session: requests.Session, get_params: dict[str:str]) -> list:
+def get_candidates_hrefs(session: requests.Session, get_params: Dict[str, str]) -> list:
     """
     Collect candidate hrefs with date_update larger than latest db date.
     """
@@ -203,27 +203,36 @@ def get_info_for_each_item(session: requests.Session, links_list: list) -> list 
             house_info_dict["date_posted"] = footer_span_tags[1]["content"]
             if len(footer_span_tags) > 2:
                 date_updated_string = str(footer_span_tags[2].string).split(" ")
-                house_info_dict["date_updated"] = (
+                date_updated = normalization_validation.second_convert_date_to_object(
                     f"{date_updated_string[-2]} {date_updated_string[-1]}"
                 )
+                assert (
+                    date_updated
+                ), "Can not normalize date updated from get_info_for_each_item()"
+                house_info_dict["date_updated"] = date_updated
             house_info_dict["location"] = str(
                 house_info.find(class_="loc").find("a").string
             )
             house_info_dict["agent_status"] = "Агентство" in response.text
-            house_info_dict["user_link"] = "https://list.am" + str(
-                soup.find(id="uinfo").find(href=re.compile(r"/user/\d+"))
+            house_info_dict["user_link"] = (
+                "https://list.am"
+                + soup.find(id="uinfo").find(href=re.compile(r"/user/\d+"))["href"]
             )
 
+            # Normalize the house_info_dict
+            house_info_dict = {
+                normalization_validation.valid_keys[k]: v for k, v in house_info.items()
+            }
             result.append(house_info_dict)
 
-        except (AssertionError, TypeError) as e:
+        except (AssertionError, TypeError, KeyError) as e:
             logger.error("Get house info error %s", e)
             break
     else:
         return result
 
 
-def list_am_scrapper(get_params: dict[str, str]):
+def list_am_scrapper(get_params: Dict[str, str]):
     """
     Scarper for list.am web site.
     """

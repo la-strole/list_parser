@@ -20,6 +20,7 @@ def create_database(db_name="database.db") -> None:
         cur = con.cursor()
         with open("schema.sql", encoding="utf-8") as fp:
             cur.executescript(fp.read())
+    logger.info("New database created")
 
 
 def get_the_last_date_as_isoformat(db_name="database.db") -> str:
@@ -38,6 +39,7 @@ def get_the_last_date_as_isoformat(db_name="database.db") -> str:
             ).fetchone()[0]
     if not date:
         return datetime(1989, 7, 21, 10, 10).isoformat()
+    logger.debug("Get latest date from database: %s", date)
     return date
 
 
@@ -73,8 +75,9 @@ def populate_database(
                         """,
                 database_row.model_dump(),
             )
+            logger.debug("Update database row")
         else:
-            # Commit database row
+            # Insert database row
             con.execute(
                 """
                         INSERT INTO advertisement 

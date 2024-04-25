@@ -1,7 +1,7 @@
 {
     "id": 1234,
     "image_href": "https://list.am/",
-    "title": "title",
+    "title": "new_title",
     "price_value": 490000,
     "currancy": "AMD",
     "description": "description",
@@ -27,3 +27,36 @@
     "facilities": None,
     "floors_count": 1,
 }
+
+# result of get_info_for_each_item
+[
+    {
+        "image_href": "https://s.list.am/f/013/79235013.webp",
+        "title": "Одноэтажный дом на ул. Гюлбенкяна в Арабкирe, 180 кв.м., евроремонт",
+        "price_value": "500000",
+        "currancy": "AMD",
+        "type": "Дом",
+        "building_type": "Монолит",
+        "total_area": "180 кв.м.",
+        "floors_count": "1",
+        "rooms_count": "3",
+        "toilet_count": "1",
+        "furniture": "Есть",
+        "garage": "Одно место",
+        "appartment_state": "Евроремонт",
+        "facilities": "Телевизор, интернет, кондиционер, шашлычная печь, беседка",
+        "appliances": "Холодильник, плита, микроволновка, кофеварка, посудомоечная машина, стиральная машина, водонагреватель",
+        "land_area": "90 кв.м.",
+        "children_allowed": "Да",
+        "animals_allowed": "По договоренности",
+        "utility_bills_included": "Не включены",
+        "prepayment": "1 месяц",
+        "description": "Для дополнительных информации звоните.",
+        "id": "20836523",
+        "date_posted": "2024-03-29T14:12:03+00:00",
+        "date_updated": "2024-04-23T19:55:00",
+        "location": "Улица Гюлбенкяна, Ереван",
+        "agent_status": True,
+        "user_link": "https://list.am/user/1937584",
+    }
+]

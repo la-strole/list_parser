@@ -39,6 +39,7 @@ valid_keys: dict[str, str] = {
     "Тип здания": "building_type",
     "Удобства": "facilities",
     "Этажей в доме": "floors_count",
+    "user_link": "user_link",
 }
 
 
@@ -205,5 +206,23 @@ def convert_date_to_object(date_string: str) -> Optional[str | None]:
         date_time_object = datetime(year, month, day, hour, minute)
         return date_time_object.isoformat()
     except Exception as e:
-        logging.error("Can not convert date from main page to datetime object: %s", e)
+        logger.error("Can not convert date from main page to datetime object: %s", e)
+        return None
+
+
+def second_convert_date_to_object(date_string: str) -> Optional[str | None]:
+    """
+    Converts a date string to object
+    "23.04.2024 19:55"
+    """
+    try:
+        date, time = date_string.split(" ")
+        day, month, year = date.split(".")
+        hour, minute = time.split(":")
+        date_time_object = datetime(
+            int(year), int(month), int(day), int(hour), int(minute)
+        )
+        return date_time_object.isoformat()
+    except Exception as e:
+        logger.error("Can not convert date from main page to datetime object: %s", e)
         return None
