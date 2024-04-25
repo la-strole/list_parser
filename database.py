@@ -49,13 +49,16 @@ def populate_database(
     """
     Populate the database.
     """
-    with sqlite3.connect(db_name) as con:
+
+    try:
+        con = sqlite3.connect(db_name)
         con.row_factory = sqlite3.Row
         cur = con.cursor()
         # Check if this id already was in the database.
         row = cur.execute(
             "SELECT * FROM advertisement WHERE id = ?", (database_row.id,)
         ).fetchone()
+
         if row:
             # Update database row
             cur.execute(
@@ -77,22 +80,30 @@ def populate_database(
             )
             con.commit()
             logger.debug("Update database row")
-        else:
-            # Insert database row
-            cur.execute(
-                """
-                        INSERT INTO advertisement 
-                        (id, image_href, title, price_value, currancy, description, 
-                        date_posted, date_updated, location, agent_status, user_link, 
-                        appliances, garage, rooms_count, toilet_count, utility_bills_included, 
-                        furniture, children_allowed, animals_allowed, total_area, land_area, 
-                        prepayment, appartment_state, type, building_type, facilities, floors_count) 
-                        VALUES (:id, :image_href, :title, :price_value, :currancy, :description, 
-                        :date_posted, :date_updated, :location, :agent_status, :user_link, :appliances, 
-                        :garage, :rooms_count, :toilet_count, :utility_bills_included, :furniture, 
-                        :children_allowed, :animals_allowed, :total_area, :land_area, :prepayment, 
-                        :appartment_state, :type, :building_type, :facilities, :floors_count)""",
-                database_row.model_dump(),
-            )
-            con.commit()
-            logger.debug("Insert row to database")
+            return 1
+
+        # Insert database row
+        cur.execute(
+            """
+                    INSERT INTO advertisement 
+                    (id, image_href, title, price_value, currancy, description, 
+                    date_posted, date_updated, location, agent_status, user_link, 
+                    appliances, garage, rooms_count, toilet_count, utility_bills_included, 
+                    furniture, children_allowed, animals_allowed, total_area, land_area, 
+                    prepayment, appartment_state, type, building_type, facilities, floors_count) 
+                    VALUES (:id, :image_href, :title, :price_value, :currancy, :description, 
+                    :date_posted, :date_updated, :location, :agent_status, :user_link, :appliances, 
+                    :garage, :rooms_count, :toilet_count, :utility_bills_included, :furniture, 
+                    :children_allowed, :animals_allowed, :total_area, :land_area, :prepayment, 
+                    :appartment_state, :type, :building_type, :facilities, :floors_count)""",
+            database_row.model_dump(),
+        )
+        con.commit()
+        logger.debug("Insert row to database")
+        return 1
+
+    except sqlite3.Error as e:
+        logger.error("database.py error: %s", e)
+        return None
+    finally:
+        con.close()

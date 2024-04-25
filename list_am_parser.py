@@ -10,6 +10,7 @@ from typing import Dict, List, Tuple
 
 import requests
 from bs4 import BeautifulSoup
+from pydantic import ValidationError
 
 import database
 import logger_config
@@ -277,6 +278,17 @@ def list_am_scrapper(get_params: Dict[str, str]):
             ), "list_am_scrapper: Database rows are empty. get_info_for_each_item returns None"
 
             # Write info to the database.
+            for row in database_rows:
+                # Validate the row
+                try:
+                    clear_row = normalization_validation.DatabaseRow.model_validate(row)
+                except ValidationError as e:
+                    logger.error("list_am_scrapper: Validate the row error: %s", e)
+                    continue
+                else:
+                    database.populate_database(clear_row)
+
+        return 1
 
     except AssertionError as e:
         logger.error("list_am_scrapper error: %s", e)
