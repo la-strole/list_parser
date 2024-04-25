@@ -1,3 +1,7 @@
+"""
+Validators and normalization functions
+"""
+
 import logging
 from datetime import datetime
 from typing import Literal, Optional
@@ -39,6 +43,10 @@ valid_keys: dict[str, str] = {
 
 
 class DatabaseRow(BaseModel):
+    """
+    Normalized database row.
+    """
+
     id: PositiveInt
     image_href: str
     title: str

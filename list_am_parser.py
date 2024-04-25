@@ -5,7 +5,6 @@ List am parser to populate database.
 import logging
 import random
 import re
-import sqlite3
 import time
 from typing import List, Tuple
 
@@ -38,7 +37,7 @@ headers = {
 }
 
 
-def get_links_and_dates_for_single_page(
+def get_links_and_dates_for_items(
     session: requests.Session,
     get_params: dict[str:str],
     latest_db_date: str,
@@ -46,7 +45,8 @@ def get_links_and_dates_for_single_page(
     referer_header="",
 ) -> Tuple[List[dict[str:str]], bool, str] | None:
     """
-    Get the list of items from list.am and add it to the final list if date updated is later than db_last_date.
+    Get the list of items from list.am and add it to the final list
+    if date updated is later than db_last_date.
     Returns tuple: list of dictionaries like {id, href, date_update}
     and if all page items are added (booblean) and request url to use as Referer header
     date_update is isoformat string.
@@ -130,7 +130,7 @@ def get_candidates_hrefs(session: requests.Session, get_params: dict[str:str]) -
     url = URL
     while True:
         # Get items from the page.
-        result = get_links_and_dates_for_single_page(
+        result = get_links_and_dates_for_items(
             session, get_params, latest_db_date, url, referer_header
         )
         items_list = result[0]
@@ -148,6 +148,9 @@ def get_candidates_hrefs(session: requests.Session, get_params: dict[str:str]) -
 
 
 def get_info_for_each_item(session: requests.Session, links_list: list) -> list | None:
+    """
+    Populate list for every item from item page from candiate list.
+    """
     result = []
     # Navigate to the item in links list.
     for link in links_list:

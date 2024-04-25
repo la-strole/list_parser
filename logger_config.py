@@ -1,3 +1,7 @@
+"""
+Logging configuration
+"""
+
 import logging.config
 import os
 
