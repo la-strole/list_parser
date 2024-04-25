@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "list-parser"
+version = "0.1.0"
+description = "List.am parser"
+authors = ["la-strole <sovaleto48@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "list_parser"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+requests = "^2.31.0"
+brotli = "^1.1.0"
+bs4 = "^0.0.2"
+lxml = "^5.2.1"
+pydantic = "^2.7.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
