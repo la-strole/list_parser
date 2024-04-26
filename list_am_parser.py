@@ -55,7 +55,7 @@ def get_links_and_dates_for_items(
     # Add random delay.
 
     time_sleep = random.randint(1, 50)
-    logger.debug("Frozen with sleep time: %s" % time_sleep)
+    logger.debug("Frozen with sleep time: %s", time_sleep)
     time.sleep(time_sleep)
     # Get page.
     if referer_header:
@@ -90,7 +90,7 @@ def get_links_and_dates_for_items(
                 ), "get_links_and_dates_for_single_page: Error with date updated parsing."
                 if date_updated > latest_db_date:
                     try:
-                        district = str(ad.find(class_="at").string).split(",")[0]
+                        district = str(object=ad.find(class_="at").string).split(",")[0]
                     except Exception as e:
                         logger.warning("Can not find district %s.", e)
                         district = None
@@ -188,8 +188,9 @@ def get_info_for_each_item(
             headers={"Referer": URL},
         )
         try:
-            assert (
-                response.status_code == 200 or response.status_code == 404
+            assert response.status_code in (
+                200,
+                404,
             ), f"Link details ({link}) request error: status code {response.status_code}"
 
             if response.status_code == 404:

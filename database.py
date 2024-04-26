@@ -78,7 +78,8 @@ def populate_database(
                         furniture = :furniture, children_allowed = :children_allowed, 
                         animals_allowed = :animals_allowed, total_area = :total_area, land_area = :land_area, 
                         prepayment = :prepayment, appartment_state = :appartment_state, type = :type, 
-                        building_type = :building_type, facilities = :facilities, floors_count = :floors_count
+                        building_type = :building_type, facilities = :facilities, floors_count = :floors_count,
+                        district = :district
                         WHERE id = :id
                         """,
                 database_row.model_dump(),
@@ -95,12 +96,12 @@ def populate_database(
                     date_posted, date_updated, location, agent_status, user_link, 
                     appliances, garage, rooms_count, toilet_count, utility_bills_included, 
                     furniture, children_allowed, animals_allowed, total_area, land_area, 
-                    prepayment, appartment_state, type, building_type, facilities, floors_count) 
+                    prepayment, appartment_state, type, building_type, facilities, floors_count, district) 
                     VALUES (:id, :image_href, :title, :price_value, :currancy, :description, 
                     :date_posted, :date_updated, :location, :agent_status, :user_link, :appliances, 
                     :garage, :rooms_count, :toilet_count, :utility_bills_included, :furniture, 
                     :children_allowed, :animals_allowed, :total_area, :land_area, :prepayment, 
-                    :appartment_state, :type, :building_type, :facilities, :floors_count)""",
+                    :appartment_state, :type, :building_type, :facilities, :floors_count, :district)""",
             database_row.model_dump(),
         )
         con.commit()
