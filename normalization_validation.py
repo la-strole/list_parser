@@ -78,6 +78,11 @@ class DatabaseRow(BaseModel):
     floors_count: str | None = 1
     district: str | None = None
 
+    @field_validator("date_posted", "date_updated")
+    @classmethod
+    def convert_datetime_to_iso_date(cls, value):
+        return value.isoformat()
+
     @field_validator("image_href", "user_link")
     @classmethod
     def http_validator(cls, value):

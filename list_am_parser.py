@@ -107,6 +107,7 @@ def get_links_and_dates_for_items(
                 "get_links_and_dates_for_items returns Advertisment list = %s",
                 item_page_list,
             )
+            logger.debug("Advertisment count = %s", len(item_page_list))
 
             return (
                 item_page_list,
