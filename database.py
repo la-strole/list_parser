@@ -113,3 +113,61 @@ def populate_database(
         return None
     finally:
         con.close()
+
+
+def add_tlg_user_to_database(user_id, db_name="database.db"):
+    """
+    Add a user to the database
+    """
+    # Check if user already exists
+    try:
+        con = sqlite3.connect(db_name)
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        # Check if this id already was in the database.
+        row = cur.execute(
+            "SELECT * FROM telegram_user_filtres WHERE user_id = ?", (user_id,)
+        )
+
+        if not row.fetchone():
+            cur.execute(
+                """
+                        INSERT INTO telegram_user_filtres
+                        (user_id) VALUES (?)
+                        """,
+                (user_id,),
+            )
+            con.commit()
+            logger.debug("Add new tlg user to the database")
+        return 1
+    except sqlite3.Error as e:
+        logger.error("database.py add_tlg_user_to_database error: %s", e)
+        return None
+    finally:
+        con.close()
+
+
+def change_telegram_user_filtres_options(
+    user_id, option_name, option_value, db_name="database.db"
+):
+    """
+    Change send_duplicates option
+    """
+    # Check if user already exists
+    try:
+        con = sqlite3.connect(db_name)
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        # Check if this id already was in the database.
+        cur.execute(
+            f"UPDATE telegram_user_filtres SET {option_name} = ? WHERE user_id = ?",
+            (option_value, user_id),
+        )
+        con.commit()
+        logger.debug("Change %s in the database", option_name)
+        return 1
+    except sqlite3.Error as e:
+        logger.error("database.py add_tlg_user_to_database error: %s", e)
+        return None
+    finally:
+        con.close()

@@ -155,6 +155,107 @@ class DatabaseRow(BaseModel):
                 return 4
 
 
+class TlgUserId(BaseModel):
+    """
+    Tlg user id. Long.
+    """
+
+    user_id: PositiveInt
+
+
+class BooleanOption(BaseModel):
+    """
+    Boolean option
+    """
+
+    option: bool
+
+    @field_validator(("option"))
+    @classmethod
+    def convert_floors_count_to_int(cls, value):
+        if value:
+            return 1
+        return 0
+
+
+class MaxPriceAMD(BaseModel):
+    """
+    Max price in AMD
+    """
+
+    option: PositiveInt
+
+    @field_validator(("option"))
+    @classmethod
+    def check_max_price(cls, value):
+        assert 10000 < value < 4000000
+        return value
+
+
+class RoomCount(BaseModel):
+    """
+    Room count
+    """
+
+    option: PositiveInt
+
+    @field_validator(("option"))
+    @classmethod
+    def check_max_price(cls, value):
+        assert 1 < value < 9
+        return value
+
+
+class Area(BaseModel):
+    """
+    Area
+    """
+
+    option: PositiveInt
+
+    @field_validator(("option"))
+    @classmethod
+    def check_area(cls, value):
+        assert 1 < value < 10000
+        return value
+
+
+class FloorsCount(BaseModel):
+    """
+    FloorsCount
+    """
+
+    option: PositiveInt
+
+    @field_validator(("option"))
+    @classmethod
+    def check_area(cls, value):
+        assert 1 < value < 4
+        return value
+
+
+class TlgBotUserFilterOption(BaseModel):
+    """
+    Name for clumn in database table telegram_user_filtres.
+    """
+
+    option_name: Literal[
+        "send_duplicates",
+        "price_value_amd",
+        "agent_status",
+        "garage",
+        "rooms_count",
+        "toilet_count",
+        "furniture",
+        "children_allowed",
+        "animals_allowed",
+        "total_area",
+        "land_area",
+        "floors_count",
+        "district",
+    ]
+
+
 # GET parameters
 available_parameters = {
     "n": "1",  # ереван, 2 итд Ачапняк Арабкир Аван Давидашен Эребуни Зейтун Канакер Кентрон Малатия Себастия

@@ -30,7 +30,8 @@ CREATE TABLE advertisement (
 );
 
 CREATE TABLE telegram_user_filtres (
-        user_id TEXT PRIMARY KEY,
+        user_id INTEGER PRIMARY KEY,
+        send_duplicates BOOLEAN DEFAULT 1,
         price_value_amd INTEGER DEFAULT NULL,
         agent_status BOOLEAN DEFAULT NULL,
         garage BOOLEAN DEFAULT NULL,
@@ -50,6 +51,6 @@ CREATE TABLE sent_adv (
         adv_id INTEGER NOT NULL,
         tlg_user_id TEXT NOT NULL,
         FOREIGN KEY(adv_id) REFERENCES advertisement(id),
-        FOREIGN KEY(tlg_user_id) REFERENCES telegram_user(user_id),
+        FOREIGN KEY(tlg_user_id) REFERENCES telegram_user(user_id)
 
 )

@@ -1,84 +1,18 @@
 """
 Callback data handler
 """
-from typing import Dict, List, Optional
 
-from telebot import TeleBot, types
+import logging
 
-import keyboard_markups
-import serialization
+from pydantic import ValidationError
+from telebot import TeleBot
 
+import database
+import logger_config
+import normalization_validation
+from telegram_bot import keyboard_markups
 
-def get_route_image(caption: str, reverse_flag: bool) -> Optional[Dict]:
-    # Retrieve the current route type.
-    if "Обратный" in caption or "обратный" in caption:
-        current_route_type = "reverse"
-    else:
-        current_route_type = "straight"
-    # Obtain the bus label.
-    bus_label = caption.split(":")[1]
-    bus_key = serialization.convert_label_to_bus_key(bus_label)
-
-    if reverse_flag:
-        if current_route_type == "straight":
-            current_route_type = "reverse"
-        else:
-            current_route_type = "straight"
-
-    if current_route_type == "straight":
-        route_info = serialization.get_bus_straight_route_info(bus_key)
-        caption = f"Маршрут:{bus_label}"
-    else:
-        route_info = serialization.get_bus_reverse_route_info(bus_key)
-        caption = f"Обратный маршрут:{bus_label}"
-
-    if route_info:
-        result = {
-            "filename": route_info["image"],
-            "caption": caption,
-            "reply_markup": keyboard_markups.create_route_image_markup(),
-        }
-        return result
-    else:
-        return None
-
-
-def get_bus_stations(caption: str, reverse_flag: bool) -> Optional[Dict]:
-    # Retrieve the current route type.
-    if "Обратный" in caption or "обратный" in caption:
-        current_route_type = "reverse"
-    else:
-        current_route_type = "straight"
-
-    # Obtain the bus label.
-    bus_label = caption.split(":")[1]
-    bus_key = serialization.convert_label_to_bus_key(bus_label)
-
-    if reverse_flag:
-        if current_route_type == "straight":
-            current_route_type = "reverse"
-        else:
-            current_route_type = "straight"
-
-    if current_route_type == "straight":
-        route_info = serialization.get_bus_straight_route_info(bus_key)
-        caption = f"Маршрут:{bus_label}"
-    else:
-        route_info = serialization.get_bus_reverse_route_info(bus_key)
-        caption = f"Обратный маршрут:{bus_label}"
-
-    if route_info:
-        stations_list = route_info["station_list"]
-
-        msg = f"<b>{caption}\n{route_info['route_name']}</b>\n\n"
-        for station in stations_list:
-            msg += f"{station}\n\n"
-
-        reply_markup = keyboard_markups.show_reverse_route_stations()
-        result = {"text": msg, "reply_markup": reply_markup}
-        return result
-    else:
-        return None
+logger = logging.getLogger(__name__)
 
 
 def callback_handler(bot: TeleBot):
@@ -89,91 +23,512 @@ def callback_handler(bot: TeleBot):
 
         # Perform actions based on the callback data
 
-        if callback_data == "1":  # Show the stations on the bus route.
-            # Retrieve the caption.
-            caption = call.message.caption
-            data = get_bus_stations(caption, reverse_flag=False)
-            if data:
-                bot.send_message(
-                    chat_id=call.message.chat.id,
-                    text=data["text"],
-                    parse_mode="html",
-                    disable_notification=True,
-                    reply_markup=data["reply_markup"],
-                )
-            else:
-                bot.send_message(
-                    call.message.chat.id, "Не удалось найти остановки для маршрута."
-                )
+        # Send_duplicates option.
+        if callback_data in ("1", "2"):
 
-        elif callback_data == "2":  # Display the image of the reverse route.
-            # Retrieve the caption.
-            caption = call.message.caption
-            data = get_route_image(caption, reverse_flag=True)
-            if data:
-                with open(data["filename"], "rb") as file:
-                    bot.edit_message_media(
-                        media=types.InputMediaPhoto(file, caption=data["caption"]),
-                        chat_id=call.message.chat.id,
-                        message_id=call.message.id,
-                        reply_markup=data["reply_markup"],
-                    )
-            else:
-                bot.send_message(
-                    call.message.chat.id, "Не удалось найти обратный маршрут."
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "send_duplicates"}
+                    ).option_name
                 )
+                option_value = normalization_validation.BooleanOption.model_validate(
+                    {"option": callback_data == "1"}
+                ).option
 
-        elif callback_data == "3":  # Display the bus stations on the reverse route.
-            # Modify the text message with information about the reverse bus stations.
-            # Retrieve the current route type.
-            caption = call.message.text.split("\n")[0]
-            data = get_bus_stations(caption, reverse_flag=True)
-            if data:
-                # Substitute the message text with new content.
-                bot.edit_message_text(
-                    text=data["text"],
-                    chat_id=call.message.chat.id,
-                    message_id=call.message.id,
-                    parse_mode="html",
-                    reply_markup=data["reply_markup"],
-                )
-            else:
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
                 bot.send_message(
                     call.message.chat.id,
-                    "Не удалось найти остановки для обратного маршрута.",
+                    text="Ошибка. Обратитесь к администратору.",
+                    disable_notification=True,
+                    parse_mode="HTML",
                 )
+                return None
 
-        elif callback_data.startswith(
-            "st"
-        ):  # Select a station from among multiple station names.
-            user_number = callback_data[2:]
-            message_text_with_stations = call.message.text.split("\n")
-            station = ""
-            for line in message_text_with_stations:
-                splitline: List[str] = line.split(".")
-                if splitline[0] == user_number:
-                    station = splitline[1].strip()
-                    break
-            if station:
-                msg = f"На остановке <b>{station}</b> останавливается транспорт:\n\n"
-                station_json_buses = (
-                    serialization.get_station_json_bus_list_for_station(station)
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # price_value_amd option
+            msg = "<b>Максимальная цена в AMD</b>\nОтвет в reply."
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+                reply_markup=keyboard_markups.max_price_amd(),
+            )
+
+        # max price not set
+        elif callback_data == "9":
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "price_value_amd"}
+                    ).option_name
                 )
-                if not station_json_buses:
-                    msg = "Не удалось найти транспорт."
+                option_value = None
+
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
+                bot.send_message(
+                    call.message.chat.id,
+                    text="Ошибка. Обратитесь к администратору.",
+                    disable_notification=True,
+                    parse_mode="HTML",
+                )
+                return None
+
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # Set agent_status
+            msg = "<b>Объявления от собственников или агенств</b>"
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+                reply_markup=keyboard_markups.agent_status(),
+            )
+
+        # Set agent status
+        elif callback_data in ("3", "4", "5"):
+
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "agent_status"}
+                    ).option_name
+                )
+                if callback_data == "3":
+                    option_value = False
+                elif callback_data == "4":
+                    option_value = True
                 else:
-                    for bus in serialization.station_json_bus_sort(station_json_buses):
-                        label = serialization.convert_station_json_bus_info_to_label(
-                            bus
-                        )
-                        label_with_thin_bcksps = label.replace(" ", "\u00a0")
-                        msg += label_with_thin_bcksps
+                    option_value = None
 
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
                 bot.send_message(
                     call.message.chat.id,
-                    text=msg,
+                    text="Ошибка. Обратитесь к администратору.",
                     disable_notification=True,
-                    parse_mode="html",
+                    parse_mode="HTML",
                 )
-            else:
-                raise ValueError
+                return None
+
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # garage option
+            msg = "<b>Наличие гаража?</b>"
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+                reply_markup=keyboard_markups.garage_option(),
+            )
+
+        # Set garage status
+        elif callback_data in ("6", "7", "8"):
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "garage"}
+                    ).option_name
+                )
+                if callback_data == "6":
+                    option_value = True
+                elif callback_data == "7":
+                    option_value = False
+                else:
+                    option_value = None
+
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
+                bot.send_message(
+                    call.message.chat.id,
+                    text="Ошибка. Обратитесь к администратору.",
+                    disable_notification=True,
+                    parse_mode="HTML",
+                )
+                return None
+
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # rooms_count option
+            msg = "<b>Количество комнат (1-8)</b>\nОтвет в reply."
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+                reply_markup=keyboard_markups.room_count(),
+            )
+
+        # Set room_count status
+        elif callback_data == "10":
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "rooms_count"}
+                    ).option_name
+                )
+                option_value = None
+
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
+                bot.send_message(
+                    call.message.chat.id,
+                    text="Ошибка. Обратитесь к администратору.",
+                    disable_notification=True,
+                    parse_mode="HTML",
+                )
+                return None
+
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # furniture option
+            msg = "<b>Наличие мебели</b>"
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+                reply_markup=keyboard_markups.furniture(),
+            )
+
+        # Set furniture option
+        elif callback_data in ("11", "12", "13", "14", "15"):
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "furniture"}
+                    ).option_name
+                )
+                if callback_data == "11":
+                    option_value = "Есть"
+                elif callback_data == "12":
+                    option_value = "Нет"
+                elif callback_data == "13":
+                    option_value = "Частичная мебель"
+                elif callback_data == "14":
+                    option_value = "По договоренности"
+                else:
+                    option_value = None
+
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
+                bot.send_message(
+                    call.message.chat.id,
+                    text="Ошибка. Обратитесь к администратору.",
+                    disable_notification=True,
+                    parse_mode="HTML",
+                )
+                return None
+
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # children_allowed option
+            msg = "<b>Можно с детьми</b>"
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+                reply_markup=keyboard_markups.children(),
+            )
+
+        # Set children_allowed option
+        elif callback_data in ("16", "17", "18"):
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "children_allowed"}
+                    ).option_name
+                )
+                if callback_data == "16":
+                    option_value = True
+                elif callback_data == "17":
+                    option_value = False
+                else:
+                    option_value = None
+
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
+                bot.send_message(
+                    call.message.chat.id,
+                    text="Ошибка. Обратитесь к администратору.",
+                    disable_notification=True,
+                    parse_mode="HTML",
+                )
+                return None
+
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # animals_allowed option
+            msg = "<b>Можно с животными</b>"
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+                reply_markup=keyboard_markups.animals(),
+            )
+
+        # Set animals_allowed option
+        elif callback_data in ("19", "20", "21"):
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "animals_allowed"}
+                    ).option_name
+                )
+                if callback_data == "19":
+                    option_value = True
+                elif callback_data == "20":
+                    option_value = False
+                else:
+                    option_value = None
+
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
+                bot.send_message(
+                    call.message.chat.id,
+                    text="Ошибка. Обратитесь к администратору.",
+                    disable_notification=True,
+                    parse_mode="HTML",
+                )
+                return None
+
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # total_area option
+            msg = "<b>Общая площадь. ОТ Ответ в Reply</b>"
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+                reply_markup=keyboard_markups.total_area(),
+            )
+
+        # set total area to undefined
+        elif callback_data == "22":
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "total_area"}
+                    ).option_name
+                )
+
+                option_value = None
+
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
+                bot.send_message(
+                    call.message.chat.id,
+                    text="Ошибка. Обратитесь к администратору.",
+                    disable_notification=True,
+                    parse_mode="HTML",
+                )
+                return None
+
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # land_area option
+            msg = "<b>Площадь участка. ОТ Ответ в Reply</b>"
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+                reply_markup=keyboard_markups.land_area(),
+            )
+
+        # set land area to undefined
+        elif callback_data == "23":
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "land_area"}
+                    ).option_name
+                )
+
+                option_value = None
+
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
+                bot.send_message(
+                    call.message.chat.id,
+                    text="Ошибка. Обратитесь к администратору.",
+                    disable_notification=True,
+                    parse_mode="HTML",
+                )
+                return None
+
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # floors_count option
+            msg = "<b>Количество этажей. (1-4) Ответ в Reply</b>"
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+                reply_markup=keyboard_markups.floors_count(),
+            )
+
+        # set floors_count to undefined
+        elif callback_data == "24":
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "floors_count"}
+                    ).option_name
+                )
+
+                option_value = None
+
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
+                bot.send_message(
+                    call.message.chat.id,
+                    text="Ошибка. Обратитесь к администратору.",
+                    disable_notification=True,
+                    parse_mode="HTML",
+                )
+                return None
+
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # district option
+            msg = "<b>Выберите район.</b>"
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+                reply_markup=keyboard_markups.district(),
+            )
+
+        # set district
+        elif callback_data in (
+            "25",
+            "26",
+            "27",
+            "28",
+            "29",
+            "30",
+            "31",
+            "32",
+            "33",
+            "34",
+            "35",
+            "36",
+            "37",
+        ):
+            try:
+                user_id = normalization_validation.TlgUserId.model_validate(
+                    {"user_id": call.from_user.id}
+                ).user_id
+                option_name = (
+                    normalization_validation.TlgBotUserFilterOption.model_validate(
+                        {"option_name": "district"}
+                    ).option_name
+                )
+
+                option_dict = {
+                    "25": "Ачапняк",
+                    "26": "Арабкир",
+                    "27": "Аван",
+                    "28": "Давидашен",
+                    "29": "Эребуни",
+                    "30": "Зейтун Канакер",
+                    "31": "Кентрон",
+                    "32": "Малатия Себастия",
+                    "33": "Нор Норк",
+                    "34": "Шенгавит",
+                    "35": "Норк Мараш",
+                    "36": "Нубарашен",
+                    "37": None,
+                }
+
+                option_value = option_dict[callback_data]
+
+            except ValidationError as e:
+                logger.error("callback_handler -> error: %s", e)
+                bot.send_message(
+                    call.message.chat.id,
+                    text="Ошибка. Обратитесь к администратору.",
+                    disable_notification=True,
+                    parse_mode="HTML",
+                )
+                return None
+
+            database.change_telegram_user_filtres_options(
+                user_id, option_name, option_value
+            )
+
+            # Final
+            msg = "<b>Ура! Все настроили.</b>"
+            bot.send_message(
+                call.message.chat.id,
+                text=msg,
+                disable_notification=True,
+                parse_mode="HTML",
+            )
