@@ -25,5 +25,6 @@ CREATE TABLE advertisement (
         type VARCHAR(50) DEFAULT NULL,
         building_type VARCHAR(50) DEFAULT NULL,
         facilities TEXT DEFAULT NULL,
-        floors_count INTEGER DEFAULT 1
+        floors_count INTEGER DEFAULT 1,
+        district VARCHAR(50) DEFAULT NULL
 );

@@ -14,6 +14,7 @@ brotli = "^1.1.0"
 bs4 = "^0.0.2"
 lxml = "^5.2.1"
 pydantic = "^2.7.1"
+pytelegrambotapi = "^4.17.0"
 
 
 [build-system]

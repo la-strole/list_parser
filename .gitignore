@@ -50,3 +50,4 @@ package.nls.*.json
 l10n/
 *.db
 launch.json
+api.txt

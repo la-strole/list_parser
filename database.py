@@ -27,9 +27,10 @@ def get_the_last_date_as_isoformat(db_name="database.db") -> str:
     """
     Get the last date from the dataadase in isoformat.
     """
-    with sqlite3.connect(db_name) as con:
-        con.row_factory = sqlite3.Row
-        cur = con.cursor()
+    con = sqlite3.connect(db_name)
+    con.row_factory = sqlite3.Row
+    cur = con.cursor()
+    try:
         date = cur.execute(
             "SELECT date_updated FROM advertisement ORDER BY date_updated DESC LIMIT 1"
         ).fetchone()[0]
@@ -37,10 +38,14 @@ def get_the_last_date_as_isoformat(db_name="database.db") -> str:
             date = cur.execute(
                 "SELECT date_posted FROM advertisement ORDER BY date_posted DESC LIMIT 1"
             ).fetchone()[0]
-    if not date:
-        return datetime(1989, 7, 21, 10, 10).isoformat()
-    logger.debug("Get latest date from database: %s", date)
-    return date
+    except TypeError:
+        logger.debug("Database don't have date.")
+        return datetime(2024, 4, 25, 0, 0).isoformat()
+    else:
+        logger.debug("Get latest date from database: %s", date)
+        return date
+    finally:
+        con.close()
 
 
 def populate_database(

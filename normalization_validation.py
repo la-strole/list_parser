@@ -40,6 +40,7 @@ valid_keys: dict[str, str] = {
     "Удобства": "facilities",
     "Этажей в доме": "floors_count",
     "user_link": "user_link",
+    "district": "district",
 }
 
 
@@ -52,7 +53,7 @@ class DatabaseRow(BaseModel):
     image_href: str
     title: str
     price_value: PositiveInt
-    currancy: Literal["USD", "AMD", "RUB"]  # TODO make currency exchange
+    currancy: Literal["USD", "AMD", "RUB"]
     description: str
     date_posted: datetime
     date_updated: datetime | None = None
@@ -75,6 +76,7 @@ class DatabaseRow(BaseModel):
     building_type: str | None = None
     facilities: str | None = None
     floors_count: str | None = 1
+    district: str | None = None
 
     @field_validator("image_href", "user_link")
     @classmethod

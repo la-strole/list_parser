@@ -53,8 +53,10 @@ def get_links_and_dates_for_items(
     date_update is isoformat string.
     """
     # Add random delay.
-    logger.debug("Frozen with sleep time")
-    time.sleep(random.randint(1, 5))
+
+    time_sleep = random.randint(1, 50)
+    logger.debug("Frozen with sleep time: %s" % time_sleep)
+    time.sleep(time_sleep)
     # Get page.
     if referer_header:
         response = session.get(
@@ -76,7 +78,7 @@ def get_links_and_dates_for_items(
                 href=re.compile(r"/ru/item/\d+")
             )
             assert len(item_tags) > 0, "Links tags found error"
-            logger.info("item_tags count = %s", len(item_tags))
+            logger.debug("item_tags count = %s", len(item_tags))
 
             item_page_list = []
             for ad in item_tags:
@@ -87,11 +89,17 @@ def get_links_and_dates_for_items(
                     date_updated
                 ), "get_links_and_dates_for_single_page: Error with date updated parsing."
                 if date_updated > latest_db_date:
+                    try:
+                        district = str(ad.find(class_="at").string).split(",")[0]
+                    except Exception as e:
+                        logger.warning("Can not find district %s.", e)
+                        district = None
                     item_page_list.append(
                         {
                             "id": ad["href"].split("/")[-1],
                             "href": f"https://list.am{ad['href']}",
                             "date_update": date_updated,
+                            "district": district,
                         }
                     )
 
@@ -140,6 +148,10 @@ def get_candidates_hrefs(
             ), f"get_candidates_hrefs: get_links_and_dates_for_items returns None. url = {url}"
             items_list = result[0]
             # Extend candidate list.
+            if (
+                items_list[0] in candidate_list
+            ):  # Redirection to the first page from more than last page.
+                break
             candidate_list.extend(items_list)
             # If all items from the page added to candidate list - go to the next page.
             if result[1]:
@@ -157,26 +169,33 @@ def get_candidates_hrefs(
     return candidate_list
 
 
-def get_info_for_each_item(session: requests.Session, links_list: list) -> list | None:
+def get_info_for_each_item(
+    session: requests.Session, links_list: List[Tuple]
+) -> list | None:
     """
     Populate list for every item from item page from candiate list.
+    Add it to the database.
     """
-    result = []
+
     # Navigate to the item in links list.
     for link in links_list:
         # Add random pause before requesting.
-        logger.debug("Frozen with sleep time")
-        time.sleep(random.randint(1, 15))
+        time_sleep = random.randint(1, 50)
+        logger.debug("Frozen with sleep time: %s", time_sleep)
+        time.sleep(time_sleep)
         response = session.get(
-            url=link,
+            url=link[0],
             headers={"Referer": URL},
         )
         try:
             assert (
-                response.status_code == 200
+                response.status_code == 200 or response.status_code == 404
             ), f"Link details ({link}) request error: status code {response.status_code}"
 
-            house_info_dict = {}
+            if response.status_code == 404:
+                continue
+
+            house_info_dict = {"district": link[1]}
 
             # Make soup.
             soup = BeautifulSoup(response.text, "lxml")
@@ -225,24 +244,35 @@ def get_info_for_each_item(session: requests.Session, links_list: list) -> list 
                 house_info.find(class_="loc").find("a").string
             )
             house_info_dict["agent_status"] = "Агентство" in response.text
-            house_info_dict["user_link"] = (
-                "https://list.am"
-                + soup.find(id="uinfo").find(href=re.compile(r"/user/\d+"))["href"]
-            )
+            try:
+                house_info_dict["user_link"] = (
+                    "https://list.am"
+                    + soup.find(id="uinfo").find(href=re.compile(r"/user/\d+"))["href"]
+                )
+            except Exception as e:
+                logger.warning("Can not parse user link %s", e)
+                house_info_dict["user_link"] = "https://example.com"
 
             # Normalize the house_info_dict
             house_info_dict = {
                 normalization_validation.valid_keys[k]: v
                 for k, v in house_info_dict.items()
             }
-            result.append(house_info_dict)
+
+            # Validate the row and add it to the database.
+            try:
+                clear_row = normalization_validation.DatabaseRow.model_validate(
+                    house_info_dict
+                )
+            except ValidationError as e:
+                logger.error("get_info_for_each_item: Validate the row error: %s", e)
+            else:
+                database.populate_database(clear_row)
+                logger.debug("item added to the database")
 
         except (AssertionError, TypeError, KeyError) as e:
             logger.error("Get house info error %s", e)
             break
-    else:
-        logger.debug("get_info_for_each_item returns %s", result)
-        return result
 
 
 def list_am_scrapper(get_params: Dict[str, str]):
@@ -269,27 +299,27 @@ def list_am_scrapper(get_params: Dict[str, str]):
                 candidate_list
             ), "list_am_scrapper: candidate_list is empty. get_candidates_hrefs returns None"
 
-            # Get candidates list properties to add to the database.
-            database_rows = get_info_for_each_item(
-                session, [i["href"] for i in candidate_list]
+            # Add info from candidates list properties to the database.
+            get_info_for_each_item(
+                session, [(i["href"], i["district"]) for i in candidate_list]
             )
-            assert (
-                database_rows
-            ), "list_am_scrapper: Database rows are empty. get_info_for_each_item returns None"
-
-            # Write info to the database.
-            for row in database_rows:
-                # Validate the row
-                try:
-                    clear_row = normalization_validation.DatabaseRow.model_validate(row)
-                except ValidationError as e:
-                    logger.error("list_am_scrapper: Validate the row error: %s", e)
-                    continue
-                else:
-                    database.populate_database(clear_row)
 
         return 1
 
     except AssertionError as e:
         logger.error("list_am_scrapper error: %s", e)
         return None
+
+
+if __name__ == "__main__":
+
+    GET_PARAMS = {
+        "n": "1",  # ереван
+        "price2": "500000",  # цена до disallow by robots.txt
+        "crc": "0",  # валюта 0 - драмы, 1 - usd
+        "_a3_1": "80",  # площадь от
+        "gl": "2",  #  1 галерея, 2 - список
+    }
+
+    result = list_am_scrapper(GET_PARAMS)
+    assert result
