@@ -28,3 +28,28 @@ CREATE TABLE advertisement (
         floors_count INTEGER DEFAULT 1,
         district VARCHAR(50) DEFAULT NULL
 );
+
+CREATE TABLE telegram_user_filtres (
+        user_id TEXT PRIMARY KEY,
+        price_value_amd INTEGER DEFAULT NULL,
+        agent_status BOOLEAN DEFAULT NULL,
+        garage BOOLEAN DEFAULT NULL,
+        rooms_count INTEGER DEFAULT NULL,
+        toilet_count INTEGER DEFAULT NULL,
+        furniture TEXT DEFAULT NULL,
+        children_allowed BOOLEAN DEFAULT NULL,
+        animals_allowed BOOLEAN DEFAULT NULL,
+        total_area INTEGER DEFAULT NULL,
+        land_area INTEGER DEFAULT NULL,
+        floors_count INTEGER DEFAULT NULL,
+        district VARCHAR(50) DEFAULT NULL
+)
+
+CREATE TABLE sent_adv (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        adv_id INTEGER NOT NULL,
+        tlg_user_id TEXT NOT NULL,
+        FOREIGN KEY(adv_id) REFERENCES advertisement(id),
+        FOREIGN KEY(tlg_user_id) REFERENCES telegram_user(user_id),
+
+)
