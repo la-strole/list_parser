@@ -225,7 +225,9 @@ def create_user_sql_query(
         ).fetchall()
 
         if result:
+            logger.debug("databse: create_user_sql_query -> returns result: %s", result)
             return [dict(row) for row in result]
+        logger.debug("database: create_user_sql_query -> returns empty list")
         return []
 
     except (sqlite3.Error, AssertionError, TypeError) as e:
