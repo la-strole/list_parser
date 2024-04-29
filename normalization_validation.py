@@ -54,6 +54,7 @@ class DatabaseRow(BaseModel):
     title: str
     price_value: PositiveInt
     currancy: Literal["USD", "AMD", "RUB"]
+    price_amd: PositiveInt
     description: str
     date_posted: datetime
     date_updated: datetime | None = None

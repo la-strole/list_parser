@@ -260,7 +260,12 @@ def get_info_for_each_item(
                 normalization_validation.valid_keys[k]: v
                 for k, v in house_info_dict.items()
             }
-
+            if house_info_dict["currancy"] == "AMD":
+                house_info_dict["price_amd"] = int(house_info_dict["price_value"])
+            elif house_info_dict["currancy"] == "USD":
+                house_info_dict["price_amd"] = int(house_info_dict["price_value"]) * 398
+            elif house_info_dict["currancy"] == "RUB":
+                house_info_dict["price_amd"] = int(house_info_dict["price_value"]) * 4
             # Validate the row and add it to the database.
             try:
                 clear_row = normalization_validation.DatabaseRow.model_validate(

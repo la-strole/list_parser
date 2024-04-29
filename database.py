@@ -5,6 +5,7 @@ Database routines
 import logging
 import sqlite3
 from datetime import datetime
+from typing import List
 
 import logger_config
 import normalization_validation
@@ -68,20 +69,20 @@ def populate_database(
             # Update database row
             cur.execute(
                 """
-                        UPDATE advertisement 
-                        SET id = :id, image_href = :image_href, title = :title, price_value = :price_value, 
-                        currancy = :currancy, description = :description, 
-                        date_posted = :date_posted , date_updated = :date_updated, location = :location, 
-                        agent_status = :agent_status, user_link = :user_link, 
-                        appliances = :appliances, garage = :garage, rooms_count = :rooms_count, 
-                        toilet_count = :toilet_count, utility_bills_included = :utility_bills_included, 
-                        furniture = :furniture, children_allowed = :children_allowed, 
-                        animals_allowed = :animals_allowed, total_area = :total_area, land_area = :land_area, 
-                        prepayment = :prepayment, appartment_state = :appartment_state, type = :type, 
-                        building_type = :building_type, facilities = :facilities, floors_count = :floors_count,
-                        district = :district
-                        WHERE id = :id
-                        """,
+                UPDATE advertisement 
+                SET id = :id, image_href = :image_href, title = :title, price_value = :price_value, 
+                currancy = :currancy, description = :description, 
+                date_posted = :date_posted , date_updated = :date_updated, location = :location, 
+                agent_status = :agent_status, user_link = :user_link, 
+                appliances = :appliances, garage = :garage, rooms_count = :rooms_count, 
+                toilet_count = :toilet_count, utility_bills_included = :utility_bills_included, 
+                furniture = :furniture, children_allowed = :children_allowed, 
+                animals_allowed = :animals_allowed, total_area = :total_area, land_area = :land_area, 
+                prepayment = :prepayment, appartment_state = :appartment_state, type = :type, 
+                building_type = :building_type, facilities = :facilities, floors_count = :floors_count,
+                district = :district, price_amd = :price_amd
+                WHERE id = :id
+                """,
                 database_row.model_dump(),
             )
             con.commit()
@@ -96,12 +97,12 @@ def populate_database(
                     date_posted, date_updated, location, agent_status, user_link, 
                     appliances, garage, rooms_count, toilet_count, utility_bills_included, 
                     furniture, children_allowed, animals_allowed, total_area, land_area, 
-                    prepayment, appartment_state, type, building_type, facilities, floors_count, district) 
+                    prepayment, appartment_state, type, building_type, facilities, floors_count, district, price_amd) 
                     VALUES (:id, :image_href, :title, :price_value, :currancy, :description, 
                     :date_posted, :date_updated, :location, :agent_status, :user_link, :appliances, 
                     :garage, :rooms_count, :toilet_count, :utility_bills_included, :furniture, 
                     :children_allowed, :animals_allowed, :total_area, :land_area, :prepayment, 
-                    :appartment_state, :type, :building_type, :facilities, :floors_count, :district)""",
+                    :appartment_state, :type, :building_type, :facilities, :floors_count, :district, :price_amd)""",
             database_row.model_dump(),
         )
         con.commit()
@@ -169,5 +170,67 @@ def change_telegram_user_filtres_options(
     except sqlite3.Error as e:
         logger.error("database.py add_tlg_user_to_database error: %s", e)
         return None
+    finally:
+        con.close()
+
+
+def create_user_sql_query(
+    user_id, last_date, db_name="database.db"
+) -> List[dict[str, str]] | None:
+    """
+    Get result from the database with users filters.
+    """
+    try:
+        con = sqlite3.connect(db_name)
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+
+        # Get user params from database
+        par = dict(
+            cur.execute(
+                "SELECT * FROM telegram_user_filtres WHERE user_id = ?", (user_id,)
+            ).fetchone()
+        )
+
+        base_sql = f"""
+        SELECT * FROM advertisement 
+        WHERE (date_updated > '{last_date}' OR date_posted > '{last_date}')
+        """
+
+        if par["price_value_amd"] is not None:
+            base_sql += f" AND price_amd <= {par['price_value_amd']}"
+        if par["agent_status"] is not None:
+            base_sql += f" AND agent_status = {par['agent_status']}"
+        if par["garage"] is not None:
+            base_sql += " AND garage"
+        if par["rooms_count"] is not None:
+            base_sql += f" AND rooms_count = {par['rooms_count']}"
+        if par["furniture"] is not None:
+            base_sql += f" AND furniture = {par['furniture']}"
+        if par["children_allowed"] is not None:
+            base_sql += " AND children_allowed"
+        if par["animals_allowed"] is not None:
+            base_sql += " AND animals_allowed"
+        if par["total_area"] is not None:
+            base_sql += f" AND total_area >= {par['total_area']}"
+        if par["land_area"] is not None:
+            base_sql += f" AND land_area >= {par['land_area']}"
+        if par["floors_count"] is not None:
+            base_sql += f" AND floors_count = {par['floors_count']}"
+        if par["district"] is not None:
+            base_sql += f" AND district = {par['district']}"
+
+        result = cur.execute(
+            f"{base_sql} ORDER BY MAX(date_updated, date_posted)"
+        ).fetchall()
+
+        if result:
+            return [dict(row) for row in result]
+        return []
+
+    except (sqlite3.Error, AssertionError, TypeError) as e:
+        logger.error("database error -> create_sql_query error : %s", e)
+        return None
+
     finally:
         con.close()

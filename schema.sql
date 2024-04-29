@@ -4,6 +4,7 @@ CREATE TABLE advertisement (
         title TEXT NOT NULL,
         price_value INTEGER NOT NULL,
         currancy CHARACTER(3) NOT NULL,
+        price_amd INTEGER NOT NULL,
         description TEXT NOT NULL,
         date_posted TEXT NOT NULL,
         date_updated TEXT DEFAULT NULL,
