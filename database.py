@@ -116,7 +116,7 @@ def populate_database(
         con.close()
 
 
-def add_tlg_user_to_database(user_id, db_name="database.db"):
+def add_tlg_user_to_database(user_id, chat_id, db_name="database.db"):
     """
     Add a user to the database
     """
@@ -125,6 +125,7 @@ def add_tlg_user_to_database(user_id, db_name="database.db"):
         con = sqlite3.connect(db_name)
         con.row_factory = sqlite3.Row
         cur = con.cursor()
+
         # Check if this id already was in the database.
         row = cur.execute(
             "SELECT * FROM telegram_user_filtres WHERE user_id = ?", (user_id,)
@@ -134,12 +135,24 @@ def add_tlg_user_to_database(user_id, db_name="database.db"):
             cur.execute(
                 """
                         INSERT INTO telegram_user_filtres
-                        (user_id) VALUES (?)
+                        (user_id, chat_id) VALUES (?)
                         """,
-                (user_id,),
+                (user_id, chat_id),
             )
-            con.commit()
             logger.debug("Add new tlg user to the database")
+
+        else:
+            cur.execute(
+                """
+                    UPDATE telegram_user_filtres 
+                    SET chat_id = ? 
+                    WHERE user_id = ?
+                    """,
+                (chat_id, user_id),
+            )
+            logger.debug("Change chat_id for existed user")
+
+        cur.commit()
         return 1
     except sqlite3.Error as e:
         logger.error("database.py add_tlg_user_to_database error: %s", e)

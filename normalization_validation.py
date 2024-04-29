@@ -162,6 +162,7 @@ class TlgUserId(BaseModel):
     """
 
     user_id: PositiveInt
+    chat_id: PositiveInt
 
 
 class BooleanOption(BaseModel):

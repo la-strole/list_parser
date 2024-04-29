@@ -1,11 +1,13 @@
 import os
 
+from dotenv import load_dotenv
 from telebot import TeleBot
 
 from telegram_bot import callback_handler, command_handler, message_handler
 
 # Add a bot instance.
-token = os.getenv("TELEGRAM_BOT_TOKEN")
+load_dotenv()
+token = os.getenv("TLG_BOT_TOKEN")
 
 assert token
 bot = TeleBot(token)

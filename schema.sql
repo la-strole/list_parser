@@ -32,6 +32,7 @@ CREATE TABLE advertisement (
 
 CREATE TABLE telegram_user_filtres (
         user_id INTEGER PRIMARY KEY,
+        chat_id INTEGER NOT NULL,
         send_duplicates BOOLEAN DEFAULT 1,
         price_value_amd INTEGER DEFAULT NULL,
         agent_status BOOLEAN DEFAULT NULL,
