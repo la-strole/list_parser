@@ -209,3 +209,17 @@ def district() -> types.InlineKeyboardMarkup:
     )
 
     return markup
+
+
+def details():
+    """
+    Show details of the advertisement
+    """
+
+    markup = quick_markup(
+        {
+            "Подробнее": {"callback_data": "details"},
+        },
+        row_width=1,
+    )
+    return markup

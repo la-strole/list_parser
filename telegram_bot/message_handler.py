@@ -240,51 +240,21 @@ def message_handler(bot: TeleBot):
             parse_mode="HTML",
         )
 
+
+def send_adv_message(bot: TeleBot, chat_id: int, row_dict) -> None:
     """
-    @bot.message_handler(func=lambda msg: True)
-    def send_bus_station_transport(message):
-        # Attempt to locate the bus station name within the JSON object.
-        possible_results = []
-        user_text = message.text.upper()
-
-        for station in serialization.get_all_stations_list():
-            if user_text in station:
-                possible_results.append(station)
-
-        # If unable to find anything, return a message.
-        if not possible_results:
-            bot.reply_to(message, "Увы, не удалось найти такой остановки.")
-
-        elif len(possible_results) == 1:
-            station = possible_results[0]
-            msg = f"На остановке <b>{station}</b> останавливается транспорт:\n\n"
-            station_json_buses = serialization.get_station_json_bus_list_for_station(
-                station
-            )
-            if not station_json_buses:
-                msg = "Не удалось найти транспорт."
-            else:
-                for bus in serialization.station_json_bus_sort(station_json_buses):
-                    label = serialization.convert_station_json_bus_info_to_label(bus)
-                    label_with_thin_bcksps = label.replace(" ", "\u00a0")
-                    msg += label_with_thin_bcksps
-
-            bot.send_message(
-                message.chat.id, text=msg, disable_notification=True, parse_mode="html"
-            )
-
-        elif len(possible_results) > 1:
-            # Select a station.
-            msg = "<b>Выберите остановку:</b>\n"
-            for number, name in enumerate(possible_results):
-                msg += f"{number+1}. {name}\n"
-            bot.send_message(
-                message.chat.id,
-                text=msg,
-                disable_notification=True,
-                parse_mode="html",
-                reply_markup=keyboard_markups.multiple_stations_markup(
-                    possible_results
-                ),
-            )
+    Send adv for user
     """
+    bot.send_photo(
+        chat_id=chat_id,
+        photo=row_dict["image_href"],
+        disable_notification=True,
+        parse_mode="HTML",
+    )
+    bot.send_message(
+        chat_id=chat_id,
+        text=f"<b>{row_dict['title']}</b>\n{row_dict['price_value']} {row_dict['currancy']}\nhttps://list.am/ru/item/{row_dict['id']}",
+        disable_notification=True,
+        parse_mode="HTML",
+        reply_markup=keyboard_markups.details(),
+    )

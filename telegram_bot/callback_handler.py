@@ -532,3 +532,65 @@ def callback_handler(bot: TeleBot):
                 disable_notification=True,
                 parse_mode="HTML",
             )
+
+        elif callback_data == "details":
+            # Get message id
+            text = call.message.text
+            try:
+                item_id = text[text.rfind("/") + 1 :]
+                assert int(item_id)
+            except ValueError as e:
+                logger.error(
+                    "Callback -> details: Can not get item id from message: %s", e
+                )
+                return None
+
+            try:
+                # Get into form database
+                row = database.get_item_info(item_id)
+                assert (
+                    row
+                ), f"Callback -> Can not get data from database for item with id {id}"
+                if row["agent_status"] == 1:
+                    agency = "Агентсво"
+                elif row["agent_status"] == 0:
+                    agency = "Собственник"
+                else:
+                    agency = ""
+                text = (
+                    f"<b>Адрес:</b> {row['location']}\n"
+                    f"<b>Район:</b> {row['district']}\n"
+                    f"<b>Цена: {row['price_value']} {row['currancy']} {agency}</b>\n"
+                    "<b>О доме:</b>\n"
+                    f"\t<b>Тип:</b> {row['type']}\n"
+                    f"\t<b>Тип здания:</b> {row['building_type']}\n"
+                    f"\t<b>Общая площадь:</b> {row['total_area']} \u33a1\n"
+                    f"\t<b>Полощадь участка</b> {row['land_area']} \u33a1\n"
+                    f"\t<b>Количество этажей:</b> {row['floors_count']}\n"
+                    f"\t<b>Количество комнат:</b> {row['rooms_count']}\n"
+                    f"\t<b>Количество санузлов:</b> {row['toilet_count']}\n"
+                    f"\t<b>Мебель:</b> {row['furniture']}\n"
+                    f"\t<b>Гараж:</b> {normalization_validation.convert_database_boolean(row['garage'])}\n"
+                    f"\t<b>Ремонт:</b> {row['appartment_state']}\n"
+                    f"\t<b>Удобства:</b> {row['appliances']}\n"
+                    "<b>Условия сделки:</b>\n"
+                    f"\t<b>Дети:</b> {normalization_validation.convert_database_boolean(row['children_allowed'])}\n"
+                    f"\t<b>Животные:</b> {normalization_validation.convert_database_boolean(row['animals_allowed'])}\n"
+                    f"\t<b>Коммунальные платежи:</b> {normalization_validation.convert_utility_bills(row['utility_bills_included'])}\n"
+                    f"\t<b>Предоплата:</b> {row['prepayment']}\n"
+                    f"<b>Описание:</b>\n{row['description']}\n"
+                    f"<b>Опубликовано:</b> {normalization_validation.convert_iso_date_str(row['date_posted'])}\n"
+                    f"<b>Обновлено:</b> {normalization_validation.convert_iso_date_str(row['date_updated'])}\n"
+                    f"<b>https://list.am/ru/item/{row['id']}</b>"
+                )
+                bot.edit_message_text(
+                    text=text,
+                    chat_id=call.message.chat.id,
+                    message_id=call.message.id,
+                    parse_mode="HTML",
+                )
+            except (AssertionError, KeyError) as e:
+                logger.error(
+                    "Callback -> details: Can not get data from database: %s", e
+                )
+                return None

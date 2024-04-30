@@ -37,16 +37,17 @@ def command_handler(bot: TeleBot):
         """
         # Add tlg user to database
         user_id = message.from_user.id
+        chat_id = message.chat.id
         try:
             clear_data = normalization_validation.TlgUserId.model_validate(
-                {"user_id": user_id}
+                {"user_id": user_id, "chat_id": chat_id}
             )
         except ValidationError as e:
             logger.error(
                 "command_handler -> send_start user_id validation error: %s", e
             )
         else:
-            database.add_tlg_user_to_database(clear_data.user_id)
+            database.add_tlg_user_to_database(clear_data.user_id, clear_data.chat_id)
             msg = (
                 "<b>Бот новых объявлений с list.am:</b>\n"
                 "Давайте настроим оповещения:\n"

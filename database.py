@@ -152,7 +152,7 @@ def add_tlg_user_to_database(user_id, chat_id, db_name="database.db"):
             )
             logger.debug("Change chat_id for existed user")
 
-        cur.commit()
+        con.commit()
         return 1
     except sqlite3.Error as e:
         logger.error("database.py add_tlg_user_to_database error: %s", e)
@@ -187,7 +187,7 @@ def change_telegram_user_filtres_options(
         con.close()
 
 
-def create_user_sql_query(
+def get_adv_for_user(
     user_id, last_date, db_name="database.db"
 ) -> List[dict[str, str]] | None:
     """
@@ -219,7 +219,7 @@ def create_user_sql_query(
         if par["rooms_count"] is not None:
             base_sql += f" AND rooms_count = {par['rooms_count']}"
         if par["furniture"] is not None:
-            base_sql += f" AND furniture = {par['furniture']}"
+            base_sql += f" AND furniture = '{par['furniture']}'"
         if par["children_allowed"] is not None:
             base_sql += " AND children_allowed"
         if par["animals_allowed"] is not None:
@@ -231,7 +231,7 @@ def create_user_sql_query(
         if par["floors_count"] is not None:
             base_sql += f" AND floors_count = {par['floors_count']}"
         if par["district"] is not None:
-            base_sql += f" AND district = {par['district']}"
+            base_sql += f" AND district = '{par['district']}'"
 
         result = cur.execute(
             f"{base_sql} ORDER BY MAX(date_updated, date_posted)"
@@ -249,3 +249,94 @@ def create_user_sql_query(
 
     finally:
         con.close()
+
+
+def get_item_info(item_id, db_name="database.db"):
+    """
+    Returns information about item from the database
+    """
+    with sqlite3.connect(db_name) as con:
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+
+        result = cur.execute(
+            """
+        SELECT * FROM advertisement 
+        WHERE id = ?
+        """,
+            (item_id,),
+        )
+        result = result.fetchall()
+        print("1: result = %s", result)
+        print("2: result type = %s", type(result))
+    return result[0]
+
+
+def get_chat_id_for_user(user, db_name="database.db"):
+    """
+    Returns chat id for user
+    """
+    con = sqlite3.connect(db_name)
+    cur = con.cursor()
+    con.row_factory = sqlite3.Row
+    try:
+        result = cur.execute(
+            "SELECT chat_id FROM telegram_user_filtres WHERE user_id = ?", (user,)
+        )
+        return result.fetchone()[0]
+    except sqlite3.Error as e:
+        logger.error("database: Can not get chat id for user %s", e)
+        return None
+
+
+def get_users_list(db_name="database.db"):
+    with sqlite3.connect(db_name) as con:
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        result = cur.execute("SELECT user_id FROM telegram_user_filtres").fetchall()
+        if result:
+            return [row["user_id"] for row in result]
+        return None
+
+
+def add_item_id_as_sent_for_user(user_id, item_id, db_name="database.db"):
+    with sqlite3.connect(db_name) as con:
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        try:
+            cur.execute(
+                "INSERT INTO sent_adv (adv_id, tlg_user_id) VALUES(?, ?)",
+                (item_id, user_id),
+            )
+            con.commit()
+            logger.debug("database -> add_item_id_as_sent_for_user error Added")
+            return 1
+        except sqlite3.Error as e:
+            logger.error("database -> add_item_id_as_sent_for_user error: %s", e)
+            return None
+
+
+def test_send_if_duplicate_item_id(user_id, item_id, db_name="database.db"):
+    with sqlite3.connect(db_name) as con:
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+        try:
+            # Test if user want to duplicate items
+            result = cur.execute(
+                "SELECT send_duplicates FROM telegram_user_filtres WHERE user_id = ?",
+                (user_id,),
+            ).fetchone()[0]
+            if result == 1:
+                return True
+            # Test if adv is already sent to this user
+            result = cur.execute(
+                "SELECT * FROM sent_adv WHERE adv_id = ? AND tlg_user_id = ?",
+                (item_id, user_id),
+            ).fetchone()
+            if result:
+                return False
+            return True
+
+        except sqlite3.Error as e:
+            logger.error("database -> add_item_id_as_sent_for_user error: %s", e)
+            return None

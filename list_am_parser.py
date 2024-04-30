@@ -15,6 +15,7 @@ from pydantic import ValidationError
 import database
 import logger_config
 import normalization_validation
+from telegram_bot import message_handler
 
 logger = logging.getLogger(__name__)
 
@@ -125,7 +126,7 @@ def get_links_and_dates_for_items(
 
 def get_candidates_hrefs(
     session: requests.Session, get_params: Dict[str, str]
-) -> list | None:
+) -> tuple | None:
     """
     Collect candidate hrefs with date_update larger than latest db date.
     """
@@ -167,7 +168,7 @@ def get_candidates_hrefs(
         return None
 
     logger.debug("get_candidates_hrefs returns %s", candidate_list)
-    return candidate_list
+    return (candidate_list, latest_db_date)
 
 
 def get_info_for_each_item(
@@ -282,7 +283,7 @@ def get_info_for_each_item(
             break
 
 
-def list_am_scrapper(get_params: Dict[str, str]):
+def list_am_scrapper(get_params: Dict[str, str], bot):
     """
     Scarper for list.am web site.
     """
@@ -308,25 +309,39 @@ def list_am_scrapper(get_params: Dict[str, str]):
 
             # Add info from candidates list properties to the database.
             get_info_for_each_item(
-                session, [(i["href"], i["district"]) for i in candidate_list]
+                session, [(i["href"], i["district"]) for i in candidate_list[0]]
             )
+
+            # Get users list
+            users = database.get_users_list()
+            assert users, "list_am_scrapper: get users list is empty"
+
+            # Latest date in database
+            latest_date = candidate_list[1]
+
+            # For user from list get adv
+            for user_id in users:
+                adv_list = database.get_adv_for_user(user_id, latest_date)
+                if not adv_list:
+                    continue
+                # get chat id
+                chat_id = database.get_chat_id_for_user(user_id)
+                assert (
+                    chat_id
+                ), f"list_am_scrapper: can not get chat id for user {user_id}"
+                # Send tlg message
+                for row in adv_list:
+                    # Test if send tlg message
+                    test_send = database.test_send_if_duplicate_item_id(
+                        user_id, row["id"]
+                    )
+                    if test_send:
+                        message_handler.send_adv_message(bot, chat_id, row)
+                        # Add id as sent
+                        database.add_item_id_as_sent_for_user(user_id, row["id"])
 
         return 1
 
     except AssertionError as e:
         logger.error("list_am_scrapper error: %s", e)
         return None
-
-
-if __name__ == "__main__":
-
-    GET_PARAMS = {
-        "n": "1",  # ереван
-        "price2": "500000",  # цена до disallow by robots.txt
-        "crc": "0",  # валюта 0 - драмы, 1 - usd
-        "_a3_1": "80",  # площадь от
-        "gl": "2",  #  1 галерея, 2 - список
-    }
-
-    result = list_am_scrapper(GET_PARAMS)
-    assert result

@@ -336,3 +336,24 @@ def second_convert_date_to_object(date_string: str) -> Optional[str | None]:
     except Exception as e:
         logger.error("Can not convert date from main page to datetime object: %s", e)
         return None
+
+
+def convert_iso_date_str(date_str: str):
+    date_object = datetime.fromisoformat(date_str)
+    return f"{date_object.day}.{date_object.month}.{date_object.year}"
+
+
+def convert_database_boolean(value):
+    if value is not None:
+        if value == 0:
+            return "Нет"
+        return "Да"
+    return "Не определено"
+
+
+def convert_utility_bills(value):
+    if value is not None:
+        if value == 0:
+            return "Не включены"
+        return "Включены"
+    return "Не определено"
