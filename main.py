@@ -26,6 +26,7 @@ callback_handler.callback_handler(bot)
 
 if __name__ == "__main__":
 
+    # Get only this adv from list.am
     GET_PARAMS = {
         "n": "1",  # ереван
         "price2": "500000",  # цена до disallow by robots.txt
@@ -40,7 +41,8 @@ if __name__ == "__main__":
     scheduler.add_job(
         func=list_am_scrapper,
         args=[GET_PARAMS, bot],
-        trigger=IntervalTrigger(seconds=1800),
+        # Set interval
+        trigger=IntervalTrigger(seconds=300),
         id="list_am_scrapper",
         name="Get data every 30 minutes",
         replace_existing=True,

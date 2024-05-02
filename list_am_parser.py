@@ -6,7 +6,7 @@ import logging
 import random
 import re
 import time
-from typing import Dict, List, Tuple
+from typing import Dict, List, Literal, Tuple
 
 import requests
 from bs4 import BeautifulSoup
@@ -341,16 +341,66 @@ def get_info_for_each_item(
     return 1
 
 
-def list_am_scrapper(get_params: Dict[str, str], bot):
+def send_tlg_msg_to_user(user_id, latest_date, bot) -> None | Literal[0] | Literal[1]:
+    """
+    Send a message to the user
+    """
+    try:
+        adv_list = database.get_adv_for_user(user_id, latest_date)
+        assert (
+            adv_list is not None
+        ), f"list_am_parser.py -> send_tlg_msg_to_user: get_adv_for_user {user_id} returns None"
+        if not adv_list:
+            logger.debug(
+                "list_am_parser.py -> send_tlg_msg_to_user: No adv for user %s", user_id
+            )
+            return 0
+        # get chat id
+        chat_id = database.get_chat_id_for_user(user_id)
+        assert (
+            chat_id
+        ), f"list_am_parser.py -> send_tlg_msg_to_user Can not get chat id for user {user_id}"
+        # Send tlg message
+        for row in adv_list:
+            # Test if send tlg message
+            test_send = database.test_send_if_duplicate_item_id(user_id, row["id"])
+            assert test_send is not None, (
+                "list_am_parser.py -> send_tlg_msg_to_user: "
+                "test_send_if_duplicate_item_id returns None, "
+                f"user_id={user_id}, item_id={row['id']}"
+            )
+            if test_send:
+                message_handler.send_adv_message(bot, chat_id, row)
+                logger.debug(
+                    "list_am_parser.py -> send_tlg_msg_to_user: Send message to user %s",
+                    user_id,
+                )
+                # Add id as sent
+                result = database.add_item_id_as_sent_for_user(user_id, row["id"])
+                assert result, (
+                    "list_am_parser.py -> send_tlg_msg_to_user: "
+                    "add_item_id_as_sent_for_user return None"
+                )
+        return 1
+
+    except AssertionError as e:
+        logger.error("list_am_parser.py -> send_tlg_msg_to_user: error: %s", e)
+        return None
+
+
+def list_am_scrapper(bot, get_params: Dict[str, str] | None = None):
     """
     Scarper for list.am web site.
     """
     try:
         # Validate GET parameters.
-        for key in get_params:
-            assert (
-                key in normalization_validation.available_parameters
-            ), "Invalid GET parameters"
+        if get_params:
+            for key in get_params:
+                assert (
+                    key in normalization_validation.available_parameters
+                ), "Invalid GET parameters"
+        else:
+            get_params = {}
 
         # Session for saving cookies.
         with requests.Session() as session:
@@ -389,42 +439,9 @@ def list_am_scrapper(get_params: Dict[str, str], bot):
 
             # For user from list get adv
             for user_id in users:
-                adv_list = database.get_adv_for_user(user_id, latest_date)
-                assert (
-                    adv_list is not None
-                ), f"list_am_parser.py -> list_am_scrapper: get_adv_for_user {user_id} returns None"
-                if not adv_list:
-                    continue
-                # get chat id
-                chat_id = database.get_chat_id_for_user(user_id)
-                assert (
-                    chat_id
-                ), f"list_am_parser.py -> list_am_scrapper: Can not get chat id for user {user_id}"
-                # Send tlg message
-                for row in adv_list:
-                    # Test if send tlg message
-                    test_send = database.test_send_if_duplicate_item_id(
-                        user_id, row["id"]
-                    )
-                    assert test_send is not None, (
-                        "list_am_parser.py -> list_am_scrapper: "
-                        "test_send_if_duplicate_item_id returns None, "
-                        f"user_id={user_id}, item_id={row['id']}"
-                    )
-                    if test_send:
-                        message_handler.send_adv_message(bot, chat_id, row)
-                        logger.debug(
-                            "list_am_parser.py -> list_am_scrapper: Send message to user %s",
-                            user_id,
-                        )
-                        # Add id as sent
-                        result = database.add_item_id_as_sent_for_user(
-                            user_id, row["id"]
-                        )
-                        assert result, (
-                            "list_am_parser.py -> list_am_scrapper: "
-                            "add_item_id_as_sent_for_user return None"
-                        )
+                result = send_tlg_msg_to_user(user_id, latest_date, bot)
+                if result is None:
+                    raise AssertionError("send_tlg_msg_to_user returns None")
 
         return 1
 

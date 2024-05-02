@@ -3,8 +3,7 @@ CREATE TABLE advertisement (
         image_href VARCHAR(255) NOT NULL,
         title TEXT NOT NULL,
         price_value INTEGER NOT NULL,
-        currancy CHARACTER(3) NOT NULL,
-        price_amd INTEGER NOT NULL,
+        currancy CHARACTER(3) NOT NULL,   
         description TEXT NOT NULL,
         date_posted TEXT NOT NULL,
         date_updated TEXT DEFAULT NULL,
@@ -27,7 +26,8 @@ CREATE TABLE advertisement (
         building_type VARCHAR(50) DEFAULT NULL,
         facilities TEXT DEFAULT NULL,
         floors_count INTEGER DEFAULT 1,
-        district VARCHAR(50) DEFAULT NULL
+        district VARCHAR(50) DEFAULT NULL,
+        price_amd INTEGER NOT NULL
 );
 
 CREATE TABLE telegram_user_filtres (
@@ -46,7 +46,7 @@ CREATE TABLE telegram_user_filtres (
         land_area INTEGER DEFAULT NULL,
         floors_count INTEGER DEFAULT NULL,
         district VARCHAR(50) DEFAULT NULL
-)
+);
 
 CREATE TABLE sent_adv (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
