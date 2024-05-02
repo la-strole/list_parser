@@ -40,7 +40,7 @@ if __name__ == "__main__":
         "gl": "2",  #  1 галерея, 2 - список
     }
 
-    create_database()
+    # create_database()
 
     list_am_scrapper(bot, GET_PARAMS)
 
