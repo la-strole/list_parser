@@ -295,7 +295,7 @@ def convert_date_to_object(date_string: str) -> Optional[str | None]:
         "Февраль": 2,
         "Март": 3,
         "Апрель": 4,
-        "Май": 5,
+        "Mай": 5,
         "Июнь": 6,
         "Июль": 7,
         "Август": 8,
@@ -316,7 +316,11 @@ def convert_date_to_object(date_string: str) -> Optional[str | None]:
         date_time_object = datetime(year, month, day, hour, minute)
         return date_time_object.isoformat()
     except Exception as e:
-        logger.error("Can not convert date from main page to datetime object: %s", e)
+        logger.error(
+            "Can not convert date from main page to datetime object: %s: %s",
+            e.__class__.__name__,
+            e,
+        )
         return None
 
 

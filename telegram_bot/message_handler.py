@@ -58,7 +58,7 @@ def message_handler(bot: TeleBot):
         )
 
         # Set agent_status
-        msg = "<b>Объявления от собственников или агенств</b>"
+        msg = "<b>Объявления от собственников или агенств (3 из 12)</b>"
         bot.send_message(
             message.chat.id,
             text=msg,
@@ -97,7 +97,7 @@ def message_handler(bot: TeleBot):
         )
 
         # furniture option
-        msg = "<b>Наличие мебели</b>"
+        msg = "<b>Наличие мебели (6 из 12)</b>"
         bot.send_message(
             message.chat.id,
             text=msg,
@@ -136,7 +136,7 @@ def message_handler(bot: TeleBot):
         )
 
         # land_area option
-        msg = "<b>Площадь участка. ОТ Ответ в Reply</b>"
+        msg = "<b>Площадь участка. ОТ Ответ в Reply (10 из 12)</b>"
         bot.send_message(
             message.chat.id,
             text=msg,
@@ -175,7 +175,7 @@ def message_handler(bot: TeleBot):
         )
 
         # floors_count option
-        msg = "<b>Количество этажей. (1-4) Ответ в Reply</b>"
+        msg = "<b>Количество этажей. (1-4) Ответ в Reply (11 из 12)</b>"
         bot.send_message(
             message.chat.id,
             text=msg,
@@ -214,7 +214,7 @@ def message_handler(bot: TeleBot):
         )
 
         # district option
-        msg = "<b>Выберите район.</b>"
+        msg = "<b>Выберите район. (12 из 12)</b>"
         bot.send_message(
             message.chat.id,
             text=msg,

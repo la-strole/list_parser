@@ -40,7 +40,7 @@ if __name__ == "__main__":
     scheduler.start()
     scheduler.add_job(
         func=list_am_scrapper,
-        args=[GET_PARAMS, bot],
+        args=[bot, GET_PARAMS],
         # Set interval
         trigger=IntervalTrigger(seconds=300),
         id="list_am_scrapper",

@@ -297,7 +297,7 @@ def get_item_info(item_id, db_name="database.db") -> dict[str, str] | None:
         return None
 
 
-def get_chat_id_for_user(user, db_name="database.db") -> str | None:
+def get_chat_id_for_user(user, db_name="database.db") -> int | None:
     """
     Returns chat id for user
     """
@@ -309,11 +309,11 @@ def get_chat_id_for_user(user, db_name="database.db") -> str | None:
             "SELECT chat_id FROM telegram_user_filtres WHERE user_id = ?", (user,)
         )
         result = result.fetchone()[0]
-        logger.debug("satabase.py -> get_chat_id_for_user: Returns chat_id=%s", result)
-        return result.fetchone()[0]
+        logger.debug("database.py -> get_chat_id_for_user: Returns chat_id=%s", result)
+        return result
 
     except (sqlite3.Error, IndexError) as e:
-        logger.debug("satabase.py -> get_chat_id_for_user: Error=%s", e)
+        logger.debug("database.py -> get_chat_id_for_user: Error=%s", e)
         return None
 
 

@@ -329,7 +329,6 @@ def get_info_for_each_item(
                     "list_am_parser.py -> get_info_for_each_item: item %s added to the database",
                     house_info_dict["id"],
                 )
-                added_items_count += 1
 
         except (AssertionError, TypeError, KeyError) as e:
             logger.error(
@@ -448,3 +447,19 @@ def list_am_scrapper(bot, get_params: Dict[str, str] | None = None):
     except AssertionError as e:
         logger.error("list_am_parser.py -> list_am_scrapper: error: %s", e)
         return None
+
+
+"""
+if __name__ == "__main__":
+    from main import bot
+
+    # Get only this adv from list.am
+    GET_PARAMS = {
+        "n": "1",  # ереван
+        "price2": "500000",  # цена до disallow by robots.txt
+        "crc": "0",  # валюта 0 - драмы, 1 - usd
+        "_a3_1": "80",  # площадь от
+        "gl": "2",  #  1 галерея, 2 - список
+    }
+    list_am_scrapper(bot, GET_PARAMS)
+"""

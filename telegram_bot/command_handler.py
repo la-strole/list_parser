@@ -61,7 +61,7 @@ def command_handler(bot: TeleBot):
             )
 
             # send_duplicates option
-            msg = "<b>Отправлять повторяющиеся объявления при их обновлении?</b>"
+            msg = "<b>Отправлять повторяющиеся объявления при их обновлении? (1 из 12)</b>"
             bot.send_message(
                 message.chat.id,
                 text=msg,

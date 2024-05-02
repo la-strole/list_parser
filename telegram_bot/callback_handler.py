@@ -54,7 +54,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # price_value_amd option
-            msg = "<b>Максимальная цена в AMD</b>\nОтвет в reply."
+            msg = "<b>Максимальная цена в AMD</b>\nОтвет в reply. (2 из 12)"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
@@ -91,7 +91,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # Set agent_status
-            msg = "<b>Объявления от собственников или агенств</b>"
+            msg = "<b>Объявления от собственников или агенств (3 из 12)</b>"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
@@ -134,7 +134,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # garage option
-            msg = "<b>Наличие гаража?</b>"
+            msg = "<b>Наличие гаража? (4 из 12)</b>"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
@@ -176,7 +176,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # rooms_count option
-            msg = "<b>Количество комнат (1-8)</b>\nОтвет в reply."
+            msg = "<b>Количество комнат (1-8)</b>\nОтвет в reply. (5 из 12)"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
@@ -213,7 +213,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # furniture option
-            msg = "<b>Наличие мебели</b>"
+            msg = "<b>Наличие мебели (6 из 12)</b>"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
@@ -259,7 +259,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # children_allowed option
-            msg = "<b>Можно с детьми</b>"
+            msg = "<b>Можно с детьми (7 из 12)</b>"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
@@ -301,7 +301,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # animals_allowed option
-            msg = "<b>Можно с животными</b>"
+            msg = "<b>Можно с животными (8 из 12)</b>"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
@@ -343,7 +343,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # total_area option
-            msg = "<b>Общая площадь. ОТ Ответ в Reply</b>"
+            msg = "<b>Общая площадь. ОТ Ответ в Reply (9 из 12)</b>"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
@@ -381,7 +381,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # land_area option
-            msg = "<b>Площадь участка. ОТ Ответ в Reply</b>"
+            msg = "<b>Площадь участка. ОТ Ответ в Reply (10 из 12)</b>"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
@@ -419,7 +419,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # floors_count option
-            msg = "<b>Количество этажей. (1-4) Ответ в Reply</b>"
+            msg = "<b>Количество этажей. (1-4) Ответ в Reply (11 из 12)</b>"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
@@ -457,7 +457,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # district option
-            msg = "<b>Выберите район.</b>"
+            msg = "<b>Выберите район. (12 из 12)</b>"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
