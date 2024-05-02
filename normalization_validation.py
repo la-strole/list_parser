@@ -339,11 +339,17 @@ def second_convert_date_to_object(date_string: str) -> Optional[str | None]:
 
 
 def convert_iso_date_str(date_str: str):
+    """
+    Convert ISO date string to readable string like dd.mm.yyyy
+    """
     date_object = datetime.fromisoformat(date_str)
     return f"{date_object.day}.{date_object.month}.{date_object.year}"
 
 
 def convert_database_boolean(value):
+    """
+    Convert sqlite boolean (0,1) to readable literals
+    """
     if value is not None:
         if value == 0:
             return "Нет"
@@ -352,6 +358,9 @@ def convert_database_boolean(value):
 
 
 def convert_utility_bills(value):
+    """
+    Convert utility bills boolean to readable literals.
+    """
     if value is not None:
         if value == 0:
             return "Не включены"

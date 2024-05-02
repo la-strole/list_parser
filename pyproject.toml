@@ -16,6 +16,7 @@ lxml = "^5.2.1"
 pydantic = "^2.7.1"
 pytelegrambotapi = "^4.17.0"
 python-dotenv = "^1.0.1"
+apscheduler = "^3.10.4"
 
 
 [build-system]

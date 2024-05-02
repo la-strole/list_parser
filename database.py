@@ -5,7 +5,7 @@ Database routines
 import logging
 import sqlite3
 from datetime import datetime
-from typing import List
+from typing import List, Literal
 
 import logger_config
 import normalization_validation
@@ -41,7 +41,7 @@ def get_the_last_date_as_isoformat(db_name="database.db") -> str:
             ).fetchone()[0]
     except TypeError:
         logger.debug("Database don't have date.")
-        return datetime(2024, 4, 25, 0, 0).isoformat()
+        return datetime.now().isoformat()
     else:
         logger.debug("Get latest date from database: %s", date)
         return date
@@ -51,7 +51,7 @@ def get_the_last_date_as_isoformat(db_name="database.db") -> str:
 
 def populate_database(
     database_row: normalization_validation.DatabaseRow, db_name="database.db"
-):
+) -> None | Literal[1]:
     """
     Populate the database.
     """
@@ -60,6 +60,7 @@ def populate_database(
         con = sqlite3.connect(db_name)
         con.row_factory = sqlite3.Row
         cur = con.cursor()
+
         # Check if this id already was in the database.
         row = cur.execute(
             "SELECT * FROM advertisement WHERE id = ?", (database_row.id,)
@@ -77,10 +78,11 @@ def populate_database(
                 appliances = :appliances, garage = :garage, rooms_count = :rooms_count, 
                 toilet_count = :toilet_count, utility_bills_included = :utility_bills_included, 
                 furniture = :furniture, children_allowed = :children_allowed, 
-                animals_allowed = :animals_allowed, total_area = :total_area, land_area = :land_area, 
-                prepayment = :prepayment, appartment_state = :appartment_state, type = :type, 
-                building_type = :building_type, facilities = :facilities, floors_count = :floors_count,
-                district = :district, price_amd = :price_amd
+                animals_allowed = :animals_allowed, total_area = :total_area, 
+                land_area = :land_area, prepayment = :prepayment, 
+                appartment_state = :appartment_state, type = :type, building_type = :building_type, 
+                facilities = :facilities, floors_count = :floors_count, district = :district, 
+                price_amd = :price_amd 
                 WHERE id = :id
                 """,
                 database_row.model_dump(),
@@ -97,26 +99,31 @@ def populate_database(
                     date_posted, date_updated, location, agent_status, user_link, 
                     appliances, garage, rooms_count, toilet_count, utility_bills_included, 
                     furniture, children_allowed, animals_allowed, total_area, land_area, 
-                    prepayment, appartment_state, type, building_type, facilities, floors_count, district, price_amd) 
+                    prepayment, appartment_state, type, building_type, facilities, 
+                    floors_count, district, price_amd) 
                     VALUES (:id, :image_href, :title, :price_value, :currancy, :description, 
                     :date_posted, :date_updated, :location, :agent_status, :user_link, :appliances, 
                     :garage, :rooms_count, :toilet_count, :utility_bills_included, :furniture, 
                     :children_allowed, :animals_allowed, :total_area, :land_area, :prepayment, 
-                    :appartment_state, :type, :building_type, :facilities, :floors_count, :district, :price_amd)""",
+                    :appartment_state, :type, :building_type, :facilities, :floors_count, 
+                    :district, :price_amd)
+                """,
             database_row.model_dump(),
         )
         con.commit()
-        logger.debug("Insert row to database")
+        logger.debug("Insert row to the database")
         return 1
 
     except sqlite3.Error as e:
-        logger.error("database.py error: %s", e)
+        logger.error("database.py -> populate_database error: %s", e)
         return None
     finally:
         con.close()
 
 
-def add_tlg_user_to_database(user_id, chat_id, db_name="database.db"):
+def add_tlg_user_to_database(
+    user_id, chat_id, db_name="database.db"
+) -> None | Literal[1]:
     """
     Add a user to the database
     """
@@ -139,7 +146,9 @@ def add_tlg_user_to_database(user_id, chat_id, db_name="database.db"):
                         """,
                 (user_id, chat_id),
             )
-            logger.debug("Add new tlg user to the database")
+            logger.debug(
+                "database.py -> add_tlg_user_to_database: Add new tlg user to the database"
+            )
 
         else:
             cur.execute(
@@ -150,12 +159,15 @@ def add_tlg_user_to_database(user_id, chat_id, db_name="database.db"):
                     """,
                 (chat_id, user_id),
             )
-            logger.debug("Change chat_id for existed user")
+            logger.debug(
+                "database.py -> add_tlg_user_to_database: Change chat_id for existed user"
+            )
 
         con.commit()
+
         return 1
     except sqlite3.Error as e:
-        logger.error("database.py add_tlg_user_to_database error: %s", e)
+        logger.error("database.py -> add_tlg_user_to_database error: %s", e)
         return None
     finally:
         con.close()
@@ -163,7 +175,7 @@ def add_tlg_user_to_database(user_id, chat_id, db_name="database.db"):
 
 def change_telegram_user_filtres_options(
     user_id, option_name, option_value, db_name="database.db"
-):
+) -> None | Literal[1]:
     """
     Change send_duplicates option
     """
@@ -172,16 +184,24 @@ def change_telegram_user_filtres_options(
         con = sqlite3.connect(db_name)
         con.row_factory = sqlite3.Row
         cur = con.cursor()
+
         # Check if this id already was in the database.
         cur.execute(
             f"UPDATE telegram_user_filtres SET {option_name} = ? WHERE user_id = ?",
             (option_value, user_id),
         )
+
         con.commit()
-        logger.debug("Change %s in the database", option_name)
+
+        logger.debug(
+            "database.py -> change_telegram_user_filtres_options: Change %s in the database",
+            option_name,
+        )
         return 1
     except sqlite3.Error as e:
-        logger.error("database.py add_tlg_user_to_database error: %s", e)
+        logger.error(
+            "database.py -> change_telegram_user_filtres_options: error: %s", e
+        )
         return None
     finally:
         con.close()
@@ -238,41 +258,46 @@ def get_adv_for_user(
         ).fetchall()
 
         if result:
-            logger.debug("databse: create_user_sql_query -> returns result: %s", result)
+            logger.debug("databse.py -> get_adv_for_user:  returns result: %s", result)
             return [dict(row) for row in result]
-        logger.debug("database: create_user_sql_query -> returns empty list")
+        logger.debug("databse.py -> get_adv_for_user: returns empty list")
         return []
 
     except (sqlite3.Error, AssertionError, TypeError) as e:
-        logger.error("database error -> create_sql_query error : %s", e)
+        logger.error("databse.py -> get_adv_for_user: error : %s", e)
         return None
 
     finally:
         con.close()
 
 
-def get_item_info(item_id, db_name="database.db"):
+def get_item_info(item_id, db_name="database.db") -> dict[str, str] | None:
     """
     Returns information about item from the database
     """
-    with sqlite3.connect(db_name) as con:
+    try:
+        con = sqlite3.connect(db_name)
         con.row_factory = sqlite3.Row
         cur = con.cursor()
 
-        result = cur.execute(
+        row_list = cur.execute(
             """
         SELECT * FROM advertisement 
         WHERE id = ?
         """,
             (item_id,),
-        )
-        result = result.fetchall()
-        print("1: result = %s", result)
-        print("2: result type = %s", type(result))
-    return result[0]
+        ).fetchall()
+        result = row_list[0]
+
+        logger.debug("database.py -> get_item_info: Return result: %s", result)
+        return result
+
+    except (sqlite3.Error, IndexError) as e:
+        logger.debug("database.py -> get_item_info: Error: %s", e)
+        return None
 
 
-def get_chat_id_for_user(user, db_name="database.db"):
+def get_chat_id_for_user(user, db_name="database.db") -> str | None:
     """
     Returns chat id for user
     """
@@ -283,23 +308,41 @@ def get_chat_id_for_user(user, db_name="database.db"):
         result = cur.execute(
             "SELECT chat_id FROM telegram_user_filtres WHERE user_id = ?", (user,)
         )
+        result = result.fetchone()[0]
+        logger.debug("satabase.py -> get_chat_id_for_user: Returns chat_id=%s", result)
         return result.fetchone()[0]
-    except sqlite3.Error as e:
-        logger.error("database: Can not get chat id for user %s", e)
+
+    except (sqlite3.Error, IndexError) as e:
+        logger.debug("satabase.py -> get_chat_id_for_user: Error=%s", e)
         return None
 
 
-def get_users_list(db_name="database.db"):
+def get_users_list(db_name="database.db") -> List[str] | None:
+    """
+    Returns list of users id from the dtabase
+    """
     with sqlite3.connect(db_name) as con:
         con.row_factory = sqlite3.Row
         cur = con.cursor()
         result = cur.execute("SELECT user_id FROM telegram_user_filtres").fetchall()
         if result:
+            logger.debug(
+                "dstabase.py -> get_users_list: returns list of user_id: len=%d",
+                len(result),
+            )
             return [row["user_id"] for row in result]
+        logger.debug(
+            "dstabase.py -> get_users_list: returns None because of empty list of user_id"
+        )
         return None
 
 
-def add_item_id_as_sent_for_user(user_id, item_id, db_name="database.db"):
+def add_item_id_as_sent_for_user(
+    user_id, item_id, db_name="database.db"
+) -> None | Literal[1]:
+    """
+    Add item id in sent adv table of the database
+    """
     with sqlite3.connect(db_name) as con:
         con.row_factory = sqlite3.Row
         cur = con.cursor()
@@ -309,14 +352,20 @@ def add_item_id_as_sent_for_user(user_id, item_id, db_name="database.db"):
                 (item_id, user_id),
             )
             con.commit()
-            logger.debug("database -> add_item_id_as_sent_for_user error Added")
+            logger.debug("database -> add_item_id_as_sent_for_user : Added")
             return 1
         except sqlite3.Error as e:
-            logger.error("database -> add_item_id_as_sent_for_user error: %s", e)
+            logger.error("database -> add_item_id_as_sent_for_user: error: %s", e)
             return None
 
 
-def test_send_if_duplicate_item_id(user_id, item_id, db_name="database.db"):
+def test_send_if_duplicate_item_id(
+    user_id, item_id, db_name="database.db"
+) -> None | bool:
+    """
+    Test if user want to get duplicated items and if item is in the databse.
+    Return boolean value if to send this adv to user.
+    """
     with sqlite3.connect(db_name) as con:
         con.row_factory = sqlite3.Row
         cur = con.cursor()
@@ -327,6 +376,9 @@ def test_send_if_duplicate_item_id(user_id, item_id, db_name="database.db"):
                 (user_id,),
             ).fetchone()[0]
             if result == 1:
+                logger.debug(
+                    "database.py -> test_send_if_duplicate_item_id: User want to get duplicates"
+                )
                 return True
             # Test if adv is already sent to this user
             result = cur.execute(
@@ -334,9 +386,17 @@ def test_send_if_duplicate_item_id(user_id, item_id, db_name="database.db"):
                 (item_id, user_id),
             ).fetchone()
             if result:
+                logger.debug(
+                    "database.py -> test_send_if_duplicate_item_id: "
+                    "User doesn't want to get duplicates, adv was already sent"
+                )
                 return False
+            logger.debug(
+                "database.py -> test_send_if_duplicate_item_id: "
+                "User doesn't want to get duplicates, but it is new adv"
+            )
             return True
 
-        except sqlite3.Error as e:
-            logger.error("database -> add_item_id_as_sent_for_user error: %s", e)
+        except (sqlite3.Error, IndexError) as e:
+            logger.error("database -> add_item_id_as_sent_for_user: error: %s", e)
             return None

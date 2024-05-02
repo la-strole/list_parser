@@ -1,5 +1,12 @@
+"""
+Project entry point
+"""
+
+import atexit
 import os
 
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 from dotenv import load_dotenv
 from telebot import TeleBot
 
@@ -27,6 +34,19 @@ if __name__ == "__main__":
         "gl": "2",  #  1 галерея, 2 - список
     }
 
-    result = list_am_scrapper(GET_PARAMS, bot)
-    assert result
+    # create schedule for parsing time
+    scheduler = BackgroundScheduler()
+    scheduler.start()
+    scheduler.add_job(
+        func=list_am_scrapper,
+        args=[GET_PARAMS, bot],
+        trigger=IntervalTrigger(seconds=1800),
+        id="list_am_scrapper",
+        name="Get data every 30 minutes",
+        replace_existing=True,
+    )
+    # Shut down the scheduler when exiting the app
+    atexit.register(lambda: scheduler.shutdown())
+
+    # Run tlg bot
     bot.infinity_polling()

@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 URL = "https://www.list.am/ru/category/63"
 
 # Fake headers.
-headers = {
+HEADERS = {
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
     "Accept-Encoding": "gzip, deflate, br",
     "Connection": "keep-alive",
@@ -56,9 +56,13 @@ def get_links_and_dates_for_items(
     # Add random delay.
 
     time_sleep = random.randint(1, 50)
-    logger.debug("Frozen with sleep time: %s", time_sleep)
+    logger.debug(
+        "list_am_parser.py -> get_links_and_dates_for_items: Frozen with sleep time: %s",
+        time_sleep,
+    )
     time.sleep(time_sleep)
-    # Get page.
+
+    # Get page and set referer header
     if referer_header:
         response = session.get(
             url, params=get_params, headers={"Referer": referer_header}
@@ -79,16 +83,17 @@ def get_links_and_dates_for_items(
                 href=re.compile(r"/ru/item/\d+")
             )
             assert len(item_tags) > 0, "Links tags found error"
-            logger.debug("item_tags count = %s", len(item_tags))
+            logger.debug(
+                "list_am_parser.py -> get_links_and_dates_for_items: item_tags count = %s",
+                len(item_tags),
+            )
 
             item_page_list = []
             for ad in item_tags:
                 date_updated = normalization_validation.convert_date_to_object(
                     str(ad.find(class_="d").string)
                 )
-                assert (
-                    date_updated
-                ), "get_links_and_dates_for_single_page: Error with date updated parsing."
+                assert date_updated, "Error with date updated parsing."
                 if date_updated > latest_db_date:
                     try:
                         district = str(object=ad.find(class_="at").string).split(",")[0]
@@ -105,10 +110,13 @@ def get_links_and_dates_for_items(
                     )
 
             logger.debug(
-                "get_links_and_dates_for_items returns Advertisment list = %s",
+                "list_am_parser.py -> get_links_and_dates_for_items: returns Advertisment list= %s",
                 item_page_list,
             )
-            logger.debug("Advertisment count = %s", len(item_page_list))
+            logger.debug(
+                "list_am_parser.py -> get_links_and_dates_for_items: Advertisment count = %s",
+                len(item_page_list),
+            )
 
             return (
                 item_page_list,
@@ -116,19 +124,25 @@ def get_links_and_dates_for_items(
                 response.request.url,
             )
 
-        except (TypeError, AssertionError, KeyError) as e:
-            logger.error("Get links of houses error %s", e)
+        except (TypeError, AssertionError, KeyError, IndexError) as e:
+            logger.error(
+                "list_am_parser.py -> get_links_and_dates_for_items: error %s", e
+            )
             return None
     else:
-        logger.error("Response status code = %s", response.status_code)
+        logger.error(
+            "list_am_parser.py -> get_links_and_dates_for_items: Response status code = %s",
+            response.status_code,
+        )
         return None
 
 
 def get_candidates_hrefs(
     session: requests.Session, get_params: Dict[str, str]
-) -> tuple | None:
+) -> Tuple[List[dict], str] | None:
     """
     Collect candidate hrefs with date_update larger than latest db date.
+    Returns list of candidate hrefs and latest db date.
     """
 
     candidate_list = []
@@ -145,16 +159,25 @@ def get_candidates_hrefs(
             result = get_links_and_dates_for_items(
                 session, get_params, latest_db_date, url, referer_header
             )
-            assert (
-                result
-            ), f"get_candidates_hrefs: get_links_and_dates_for_items returns None. url = {url}"
+            assert result, (
+                "list_am_parser.py -> get_candidates_hrefs: "
+                f"get_links_and_dates_for_items returns None. url = {url}"
+            )
+
             items_list = result[0]
             # Extend candidate list.
+
             if (
                 items_list[0] in candidate_list
             ):  # Redirection to the first page from more than last page.
+                logger.debug(
+                    "list_am_parser.py -> get_candidates_hrefs: "
+                    "Redirection to the first page from more than last page."
+                )
                 break
+
             candidate_list.extend(items_list)
+
             # If all items from the page added to candidate list - go to the next page.
             if result[1]:
                 page_number += 1
@@ -164,10 +187,12 @@ def get_candidates_hrefs(
                 break
 
     except AssertionError as e:
-        logger.error("get_candidates_hrefs: %s", e)
+        logger.error("list_am_parser.py -> get_candidates_hrefs: %s", e)
         return None
 
-    logger.debug("get_candidates_hrefs returns %s", candidate_list)
+    logger.debug(
+        "list_am_parser.py -> get_candidates_hrefs: returns %s", candidate_list
+    )
     return (candidate_list, latest_db_date)
 
 
@@ -183,8 +208,12 @@ def get_info_for_each_item(
     for link in links_list:
         # Add random pause before requesting.
         time_sleep = random.randint(1, 50)
-        logger.debug("Frozen with sleep time: %s", time_sleep)
+        logger.debug(
+            "list_am_parser.py -> get_info_for_each_item: Frozen with sleep time: %s",
+            time_sleep,
+        )
         time.sleep(time_sleep)
+
         response = session.get(
             url=link[0],
             headers={"Referer": URL},
@@ -193,7 +222,10 @@ def get_info_for_each_item(
             assert response.status_code in (
                 200,
                 404,
-            ), f"Link details ({link}) request error: status code {response.status_code}"
+            ), (
+                "list_am_parser.py -> get_info_for_each_item: "
+                f"Link details ({link}) request error: status code {response.status_code}"
+            )
 
             if response.status_code == 404:
                 continue
@@ -229,7 +261,9 @@ def get_info_for_each_item(
             footer_span_tags = (
                 house_info.find(class_="vi").find(class_="footer").findAll("span")
             )
-            assert len(footer_span_tags) >= 2, "footer_span_tags len is not 3"
+            assert (
+                len(footer_span_tags) >= 2
+            ), "list_am_parser.py -> get_info_for_each_item: footer_span_tags len < 2"
             house_info_dict["id"] = str(footer_span_tags[0].string).rsplit(
                 " ", maxsplit=1
             )[-1]
@@ -239,9 +273,10 @@ def get_info_for_each_item(
                 date_updated = normalization_validation.second_convert_date_to_object(
                     f"{date_updated_string[-2]} {date_updated_string[-1]}"
                 )
-                assert (
-                    date_updated
-                ), "Can not normalize date updated from get_info_for_each_item()"
+                assert date_updated, (
+                    "list_am_parser.py -> get_info_for_each_item: "
+                    "Can not normalize date updated from get_info_for_each_item()"
+                )
                 house_info_dict["date_updated"] = date_updated
             house_info_dict["location"] = str(
                 house_info.find(class_="loc").find("a").string
@@ -253,7 +288,11 @@ def get_info_for_each_item(
                     + soup.find(id="uinfo").find(href=re.compile(r"/user/\d+"))["href"]
                 )
             except Exception as e:
-                logger.warning("Can not parse user link %s", e)
+                logger.warning(
+                    "list_am_parser.py -> get_info_for_each_item: "
+                    "Can not parse user link %s",
+                    e,
+                )
                 house_info_dict["user_link"] = "https://example.com"
 
             # Normalize the house_info_dict
@@ -261,6 +300,7 @@ def get_info_for_each_item(
                 normalization_validation.valid_keys[k]: v
                 for k, v in house_info_dict.items()
             }
+            # Simple Currency exchange
             if house_info_dict["currancy"] == "AMD":
                 house_info_dict["price_amd"] = int(house_info_dict["price_value"])
             elif house_info_dict["currancy"] == "USD":
@@ -273,14 +313,32 @@ def get_info_for_each_item(
                     house_info_dict
                 )
             except ValidationError as e:
-                logger.error("get_info_for_each_item: Validate the row error: %s", e)
+                logger.error(
+                    (
+                        "list_am_parser.py -> get_info_for_each_item: "
+                        "Item %s Validate the row error: %s"
+                    ),
+                    house_info_dict[id],
+                    e,
+                )
+                return None
             else:
+                # Populate database
                 database.populate_database(clear_row)
-                logger.debug("item added to the database")
+                logger.debug(
+                    "list_am_parser.py -> get_info_for_each_item: item %s added to the database",
+                    house_info_dict["id"],
+                )
+                added_items_count += 1
 
         except (AssertionError, TypeError, KeyError) as e:
-            logger.error("Get house info error %s", e)
-            break
+            logger.error(
+                "list_am_parser.py -> get_info_for_each_item: Get house info error %s",
+                e,
+            )
+            return None
+
+    return 1
 
 
 def list_am_scrapper(get_params: Dict[str, str], bot):
@@ -298,50 +356,78 @@ def list_am_scrapper(get_params: Dict[str, str], bot):
         with requests.Session() as session:
 
             # Update headers with fake headers.
-            session.headers.update(headers)
-            logger.debug("Update html headers with fake headers")
+            session.headers.update(HEADERS)
+            logger.debug(
+                "list_am_parser.py -> list_am_scrapper: Update html headers with fake headers"
+            )
 
-            # Get candidates list to go to the each item link.
+            # Get candidates list to visit each item page.
             candidate_list = get_candidates_hrefs(session, get_params)
-            assert (
-                candidate_list
-            ), "list_am_scrapper: candidate_list is empty. get_candidates_hrefs returns None"
+            assert candidate_list and len(candidate_list) == 2, (
+                "list_am_parser.py -> list_am_scrapper: "
+                "candidate_list is empty. get_candidates_hrefs returns None"
+            )
 
             # Add info from candidates list properties to the database.
-            get_info_for_each_item(
+            result = get_info_for_each_item(
                 session, [(i["href"], i["district"]) for i in candidate_list[0]]
+            )
+            assert result, (
+                "list_am_parser.py -> list_am_scrapper: "
+                "Can not add all candiadates to the database "
+                "get_info_for_each_item returns None"
             )
 
             # Get users list
             users = database.get_users_list()
-            assert users, "list_am_scrapper: get users list is empty"
+            assert (
+                users
+            ), "list_am_parser.py -> list_am_scrapper: get users list is empty"
 
-            # Latest date in database
+            # Latest date in the database
             latest_date = candidate_list[1]
 
             # For user from list get adv
             for user_id in users:
                 adv_list = database.get_adv_for_user(user_id, latest_date)
+                assert (
+                    adv_list is not None
+                ), f"list_am_parser.py -> list_am_scrapper: get_adv_for_user {user_id} returns None"
                 if not adv_list:
                     continue
                 # get chat id
                 chat_id = database.get_chat_id_for_user(user_id)
                 assert (
                     chat_id
-                ), f"list_am_scrapper: can not get chat id for user {user_id}"
+                ), f"list_am_parser.py -> list_am_scrapper: Can not get chat id for user {user_id}"
                 # Send tlg message
                 for row in adv_list:
                     # Test if send tlg message
                     test_send = database.test_send_if_duplicate_item_id(
                         user_id, row["id"]
                     )
+                    assert test_send is not None, (
+                        "list_am_parser.py -> list_am_scrapper: "
+                        "test_send_if_duplicate_item_id returns None, "
+                        f"user_id={user_id}, item_id={row['id']}"
+                    )
                     if test_send:
                         message_handler.send_adv_message(bot, chat_id, row)
+                        logger.debug(
+                            "list_am_parser.py -> list_am_scrapper: Send message to user %s",
+                            user_id,
+                        )
                         # Add id as sent
-                        database.add_item_id_as_sent_for_user(user_id, row["id"])
+                        result = database.add_item_id_as_sent_for_user(
+                            user_id, row["id"]
+                        )
+                        assert result, (
+                            "list_am_parser.py -> list_am_scrapper: "
+                            "add_item_id_as_sent_for_user return None"
+                        )
 
         return 1
 
     except AssertionError as e:
-        logger.error("list_am_scrapper error: %s", e)
+        logger.error("list_am_parser.py -> list_am_scrapper: error: %s", e)
         return None
