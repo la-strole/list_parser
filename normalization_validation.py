@@ -317,7 +317,10 @@ def convert_date_to_object(date_string: str) -> Optional[str | None]:
         return date_time_object.isoformat()
     except Exception as e:
         logger.error(
-            "Can not convert date from main page to datetime object: %s: %s",
+            (
+                "Normalization_validation -> convert_date_to_object: "
+                "Can not convert date from main page to datetime object: %s: %s"
+            ),
             e.__class__.__name__,
             e,
         )
@@ -338,7 +341,13 @@ def second_convert_date_to_object(date_string: str) -> Optional[str | None]:
         )
         return date_time_object.isoformat()
     except Exception as e:
-        logger.error("Can not convert date from main page to datetime object: %s", e)
+        logger.error(
+            (
+                "Normalization_validation -> second_convert_date_to_object: "
+                "Can not convert date from main page to datetime object: %s"
+            ),
+            e,
+        )
         return None
 
 
