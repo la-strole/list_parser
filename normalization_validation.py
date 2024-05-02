@@ -162,6 +162,13 @@ class TlgUserId(BaseModel):
     """
 
     user_id: PositiveInt
+
+
+class TlgChatId(BaseModel):
+    """
+    Tlg chat id. Long.
+    """
+
     chat_id: PositiveInt
 
 
@@ -356,7 +363,8 @@ def convert_iso_date_str(date_str: str):
     Convert ISO date string to readable string like dd.mm.yyyy
     """
     date_object = datetime.fromisoformat(date_str)
-    return f"{date_object.day}.{date_object.month}.{date_object.year}"
+    result = ".".join(date_object.split("T")[0].split("-")[::-1])
+    return result
 
 
 def convert_database_boolean(value):

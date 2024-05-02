@@ -168,7 +168,7 @@ def get_candidates_hrefs(
             # Extend candidate list.
 
             if (
-                items_list[0] in candidate_list
+                items_list and items_list[0] in candidate_list
             ):  # Redirection to the first page from more than last page.
                 logger.debug(
                     "list_am_parser.py -> get_candidates_hrefs: "

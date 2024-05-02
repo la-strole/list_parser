@@ -3,6 +3,7 @@ Project entry point
 """
 
 import atexit
+import logging
 import os
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -10,8 +11,12 @@ from apscheduler.triggers.interval import IntervalTrigger
 from dotenv import load_dotenv
 from telebot import TeleBot
 
+import logger_config
+from database import create_database
 from list_am_parser import list_am_scrapper
 from telegram_bot import callback_handler, command_handler, message_handler
+
+logger = logging.getLogger(__name__)
 
 # Add a bot instance.
 load_dotenv()
@@ -35,6 +40,10 @@ if __name__ == "__main__":
         "gl": "2",  #  1 галерея, 2 - список
     }
 
+    create_database()
+
+    list_am_scrapper(bot, GET_PARAMS)
+
     # create schedule for parsing time
     scheduler = BackgroundScheduler()
     scheduler.start()
@@ -42,7 +51,7 @@ if __name__ == "__main__":
         func=list_am_scrapper,
         args=[bot, GET_PARAMS],
         # Set interval
-        trigger=IntervalTrigger(seconds=300),
+        trigger=IntervalTrigger(seconds=1800),
         id="list_am_scrapper",
         name="Get data every 30 minutes",
         replace_existing=True,

@@ -58,7 +58,7 @@ def message_handler(bot: TeleBot):
         )
 
         # Set agent_status
-        msg = "<b>Объявления от собственников или агенств (3 из 12)</b>"
+        msg = "<b>Объявления от собственников или агентств (3 из 12)</b>"
         bot.send_message(
             message.chat.id,
             text=msg,

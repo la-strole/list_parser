@@ -4,7 +4,7 @@ Database routines
 
 import logging
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Literal
 
 import logger_config
@@ -40,7 +40,10 @@ def get_the_last_date_as_isoformat(db_name="database.db") -> str:
                 "SELECT date_posted FROM advertisement ORDER BY date_posted DESC LIMIT 1"
             ).fetchone()[0]
     except TypeError:
-        result = datetime.now().isoformat()
+        # returns GMT + 4 offset
+        result = (
+            datetime.now() + timedelta(hours=4) - timedelta(minutes=30)
+        ).isoformat()
         logger.debug("Database don't have date. Return: %s", result)
         return result
     else:
@@ -143,7 +146,7 @@ def add_tlg_user_to_database(
             cur.execute(
                 """
                         INSERT INTO telegram_user_filtres
-                        (user_id, chat_id) VALUES (?)
+                        (user_id, chat_id) VALUES (?, ?)
                         """,
                 (user_id, chat_id),
             )
