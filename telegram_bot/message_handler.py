@@ -136,7 +136,7 @@ def message_handler(bot: TeleBot):
         )
 
         # land_area option
-        msg = "<b>Площадь участка. ОТ Ответ в Reply (10 из 12)</b>"
+        msg = "<b>Площадь участка.\n кв.м. ОТ\nОтвет в Reply (10 из 12)</b>"
         bot.send_message(
             message.chat.id,
             text=msg,

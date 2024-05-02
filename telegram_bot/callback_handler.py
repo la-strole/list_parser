@@ -343,7 +343,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # total_area option
-            msg = "<b>Общая площадь. ОТ Ответ в Reply (9 из 12)</b>"
+            msg = "<b>Общая площадь. \n кв.м. ОТ \nОтвет в Reply (9 из 12)</b>"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,
@@ -381,7 +381,7 @@ def callback_handler(bot: TeleBot):
             )
 
             # land_area option
-            msg = "<b>Площадь участка. ОТ Ответ в Reply (10 из 12)</b>"
+            msg = "<b>Площадь участка.\n кв.м. ОТ \nОтвет в Reply (10 из 12)</b>"
             bot.send_message(
                 call.message.chat.id,
                 text=msg,

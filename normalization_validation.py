@@ -362,8 +362,7 @@ def convert_iso_date_str(date_str: str):
     """
     Convert ISO date string to readable string like dd.mm.yyyy
     """
-    date_object = datetime.fromisoformat(date_str)
-    result = ".".join(date_object.split("T")[0].split("-")[::-1])
+    result = ".".join(date_str.split("T")[0].split("-")[::-1])
     return result
 
 
