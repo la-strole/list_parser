@@ -552,7 +552,7 @@ def callback_handler(bot: TeleBot):
                     row
                 ), f"Callback -> Can not get data from database for item with id {id}"
                 if row["agent_status"] == 1:
-                    agency = "Агентсво"
+                    agency = "Агентство"
                 elif row["agent_status"] == 0:
                     agency = "Собственник"
                 else:

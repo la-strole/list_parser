@@ -40,8 +40,9 @@ def get_the_last_date_as_isoformat(db_name="database.db") -> str:
                 "SELECT date_posted FROM advertisement ORDER BY date_posted DESC LIMIT 1"
             ).fetchone()[0]
     except TypeError:
-        logger.debug("Database don't have date.")
-        return datetime.now().isoformat()
+        result = datetime.now().isoformat()
+        logger.debug("Database don't have date. Return: %s", result)
+        return result
     else:
         logger.debug("Get latest date from database: %s", date)
         return date
