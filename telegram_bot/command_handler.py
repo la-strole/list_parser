@@ -16,15 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 def command_handler(bot: TeleBot):
-    """
-    @bot.message_handler(
-        commands=[
-            "help",
-        ]
-    )
-    def send_help(message):
-        bot.reply_to(message, "1. Выберите параметры для оповещений.\n")
-    """
 
     @bot.message_handler(
         commands=[
@@ -104,6 +95,30 @@ def command_handler(bot: TeleBot):
 
         else:
             msg = "Увы, пока нет сохраненных настроек."
+
+        bot.send_message(
+            message.chat.id,
+            text=msg,
+            disable_notification=True,
+            parse_mode="HTML",
+        )
+
+    @bot.message_handler(
+        commands=[
+            "MySettings",
+        ]
+    )
+    def send_help(message):
+        """
+        Send help msg
+        """
+        msg = (
+            "Бот раз в 30 минут отправляет сообщения о новых объявлениях "
+            "по аренде домов в Ереване на list.am в соответствии с выбранными фильтрами. "
+            "Выберите /start для настройки фильтров. Вы можете изменить их в любой момент, "
+            "заново ответив на сообщения (или перенастроить их все, нажав еще раз /start). "
+            "Просмотреть текущие фильры можно в меню коммандой Мои настройки. \nУдачи в поиске!"
+        )
 
         bot.send_message(
             message.chat.id,
