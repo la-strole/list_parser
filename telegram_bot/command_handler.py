@@ -66,7 +66,9 @@ def command_handler(bot: TeleBot):
             )
 
             # send_duplicates option
-            msg = "<b>Отправлять бъявления с тем же id при их обновлении? (1 из 12)</b>"
+            msg = (
+                "<b>Отправлять объявления с тем же id при их обновлении? (1 из 12)</b>"
+            )
             bot.send_message(
                 message.chat.id,
                 text=msg,
@@ -74,3 +76,38 @@ def command_handler(bot: TeleBot):
                 parse_mode="HTML",
                 reply_markup=keyboard_markups.send_duplicates(),
             )
+
+    @bot.message_handler(
+        commands=[
+            "MySettings",
+        ]
+    )
+    def send_user_settings(message):
+        """
+        Send user's settings
+        """
+        # Get user's settings from the database
+        user_id = message.from_user.id
+        clear_data = normalization_validation.TlgUserId.model_validate(
+            {"user_id": user_id}
+        )
+        par = database.get_user_params_from_database(clear_data.user_id)
+        if par:
+            msg = "Текущие настройки:\n"
+            # Get reverse test from normalization/validation
+            for par_name in par:
+                # Get reverse name
+                for key, value in normalization_validation.valid_keys.items():
+                    if value == par_name:
+                        msg = msg + f"{key}: {par[par_name]}\n"
+                        break
+
+        else:
+            msg = "Увы, пока нет сохраненных настроек."
+
+        bot.send_message(
+            message.chat.id,
+            text=msg,
+            disable_notification=True,
+            parse_mode="HTML",
+        )

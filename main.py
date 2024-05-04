@@ -9,7 +9,7 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from dotenv import load_dotenv
-from telebot import TeleBot
+from telebot import TeleBot, types
 
 import logger_config
 from database import create_database
@@ -24,7 +24,14 @@ token = os.getenv("TLG_BOT_TOKEN")
 
 assert token
 bot = TeleBot(token)
-
+# Add tlg menu
+bot.set_my_commands(
+    [
+        types.BotCommand("/start", "Перезапуск бота"),
+        types.BotCommand("/help", "Помощь"),
+        types.BotCommand("/MySettings", "Мои настройки"),
+    ]
+)
 command_handler.command_handler(bot)
 message_handler.message_handler(bot)
 callback_handler.callback_handler(bot)

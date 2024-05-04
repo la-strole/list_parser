@@ -218,16 +218,14 @@ def get_adv_for_user(
     Get result from the database with users filters.
     """
     try:
+
+        # Get user params from database
+        par = get_user_params_from_database(user_id)
+        assert par, "get_user_params_from_database() return None"
+
         con = sqlite3.connect(db_name)
         con.row_factory = sqlite3.Row
         cur = con.cursor()
-
-        # Get user params from database
-        par = dict(
-            cur.execute(
-                "SELECT * FROM telegram_user_filtres WHERE user_id = ?", (user_id,)
-            ).fetchone()
-        )
 
         base_sql = f"""
         SELECT * FROM advertisement 
@@ -404,3 +402,31 @@ def test_send_if_duplicate_item_id(
         except (sqlite3.Error, IndexError) as e:
             logger.error("database -> add_item_id_as_sent_for_user: error: %s", e)
             return None
+
+
+def get_user_params_from_database(
+    user_id, db_name="database.db"
+) -> dict[str, str] | None:
+    """
+    Get user parameters from the database
+    """
+    try:
+        con = sqlite3.connect(db_name)
+        con.row_factory = sqlite3.Row
+        cur = con.cursor()
+
+        # Get user params from database
+        par = dict(
+            cur.execute(
+                "SELECT * FROM telegram_user_filtres WHERE user_id = ?", (user_id,)
+            ).fetchone()
+        )
+
+        return par
+
+    except (sqlite3.Error, IndexError) as e:
+        logger.error("database.py -> get_user_params_from_database eroor: %s", e)
+        return None
+
+    finally:
+        con.close()
