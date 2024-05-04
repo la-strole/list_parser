@@ -31,7 +31,7 @@ def agent_status() -> types.InlineKeyboardMarkup:
         {
             "Только собственник": {"callback_data": "3"},
             "Только агентство": {"callback_data": "4"},
-            "Не важно": {"callback_data": "5"},
+            "Неважно": {"callback_data": "5"},
         },
         row_width=2,
     )
@@ -48,7 +48,7 @@ def garage_option() -> types.InlineKeyboardMarkup:
         {
             "Да": {"callback_data": "6"},
             "Нет": {"callback_data": "7"},
-            "Не важно": {"callback_data": "8"},
+            "Неважно": {"callback_data": "8"},
         },
         row_width=2,
     )
@@ -63,7 +63,7 @@ def max_price_amd() -> types.InlineKeyboardMarkup:
 
     markup = quick_markup(
         {
-            "Не важно": {"callback_data": "9"},
+            "Неважно": {"callback_data": "9"},
         },
         row_width=1,
     )
@@ -78,7 +78,7 @@ def room_count() -> types.InlineKeyboardMarkup:
 
     markup = quick_markup(
         {
-            "Не важно": {"callback_data": "10"},
+            "Неважно": {"callback_data": "10"},
         },
         row_width=1,
     )
@@ -97,7 +97,7 @@ def furniture() -> types.InlineKeyboardMarkup:
             "Нет": {"callback_data": "12"},
             "Частичная мебель": {"callback_data": "13"},
             "По договоренности": {"callback_data": "14"},
-            "Не важно": {"callback_data": "15"},
+            "Неважно": {"callback_data": "15"},
         },
         row_width=2,
     )
@@ -114,7 +114,7 @@ def children() -> types.InlineKeyboardMarkup:
         {
             "Да": {"callback_data": "16"},
             "Нет": {"callback_data": "17"},
-            "Не важно": {"callback_data": "18"},
+            "Неважно": {"callback_data": "18"},
         },
         row_width=2,
     )
@@ -131,7 +131,7 @@ def animals() -> types.InlineKeyboardMarkup:
         {
             "Да": {"callback_data": "19"},
             "Нет": {"callback_data": "20"},
-            "Не важно": {"callback_data": "21"},
+            "Неважно": {"callback_data": "21"},
         },
         row_width=2,
     )
@@ -146,7 +146,7 @@ def total_area() -> types.InlineKeyboardMarkup:
 
     markup = quick_markup(
         {
-            "Не важно": {"callback_data": "22"},
+            "Неважно": {"callback_data": "22"},
         },
         row_width=1,
     )
@@ -161,7 +161,7 @@ def land_area() -> types.InlineKeyboardMarkup:
 
     markup = quick_markup(
         {
-            "Не важно": {"callback_data": "23"},
+            "Неважно": {"callback_data": "23"},
         },
         row_width=1,
     )
@@ -176,7 +176,7 @@ def floors_count() -> types.InlineKeyboardMarkup:
 
     markup = quick_markup(
         {
-            "Не важно": {"callback_data": "24"},
+            "Неважно": {"callback_data": "24"},
         },
         row_width=1,
     )
@@ -203,7 +203,7 @@ def district() -> types.InlineKeyboardMarkup:
             "Шенгавит": {"callback_data": "34"},
             "Норк Мараш": {"callback_data": "35"},
             "Нубарашен": {"callback_data": "36"},
-            "Не важно": {"callback_data": "37"},
+            "Неважно": {"callback_data": "37"},
         },
         row_width=2,
     )

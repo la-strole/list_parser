@@ -84,13 +84,16 @@ def command_handler(bot: TeleBot):
         )
         par = database.get_user_params_from_database(clear_data.user_id)
         if par:
-            msg = "Текущие настройки:\n"
+            msg = "<b>Текущие настройки:</b>\n"
             # Get reverse test from normalization/validation
             for par_name in par:
                 # Get reverse name
                 for key, value in normalization_validation.valid_keys.items():
                     if value == par_name:
-                        msg = msg + f"{key}: {par[par_name]}\n"
+                        if par[par_name] is None:
+                            msg = msg + f"<b>{key}:</b> не определено\n"
+                        else:
+                            msg = msg + f"<b>{key}:</b> {par[par_name]}\n"
                         break
 
         else:
