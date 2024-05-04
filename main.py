@@ -24,14 +24,7 @@ token = os.getenv("TLG_BOT_TOKEN")
 
 assert token
 bot = TeleBot(token)
-# Add tlg menu
-bot.set_my_commands(
-    [
-        types.BotCommand("/start", "Перезапуск бота"),
-        types.BotCommand("/help", "Помощь"),
-        types.BotCommand("/MySettings", "Мои настройки"),
-    ]
-)
+
 command_handler.command_handler(bot)
 message_handler.message_handler(bot)
 callback_handler.callback_handler(bot)

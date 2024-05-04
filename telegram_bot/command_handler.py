@@ -70,7 +70,7 @@ def command_handler(bot: TeleBot):
 
     @bot.message_handler(
         commands=[
-            "MySettings",
+            "mysettings",
         ]
     )
     def send_user_settings(message):
@@ -105,7 +105,7 @@ def command_handler(bot: TeleBot):
 
     @bot.message_handler(
         commands=[
-            "MySettings",
+            "help",
         ]
     )
     def send_help(message):
