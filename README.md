@@ -1,8 +1,7 @@
 <p align="center">
   <a href="" rel="noopener">
- <img width=200px height=200px src="https://i.imgur.com/FxL5qM0.jpg" alt="Bot logo"></a>
+ <img width=200px height=200px src="/README_DATA/search-house.png" alt="Bot logo"></a>
 </p>
-
 <h3 align="center">List_House_Search</h3>
 
 <div align="center">
@@ -45,7 +44,7 @@ Every half an hour, the parser collects data on new house rental listings on lis
 The database consists of three tables (you can view its SQL structure in the file schema.sql): \
 a table for listings (updated every half an hour), \
 a table for bot users (to store user IDs and user-configured filters), \
-and a table for the IDs of listings sent to specific users (to avoid sending duplicate listings). \
+and a table for the IDs of listings sent to specific users (to avoid sending duplicate listings). 
 
 The bot is deployed in a Docker container, and the SQLite database provides local storage (to ensure its persistence in case the Docker \
 container stops working) and is connected to the Docker container as a <a href=https://docs.docker.com/storage/volumes/>volume</a>.
@@ -54,13 +53,16 @@ The final workflow looks like this:
 
     The parser runs every half an hour:
     1.1. It finds the latest update/publication date in the listings table.
-    1.2. It gathers information about listings from all pages of list.am with dates later than the one obtained from the database.
+    1.2. It gathers information about listings from all pages of list.am with dates later than the one obtained from 
+    the database.
     1.3. It adds the listings to the database table.
     1.4. For each saved user, it finds their filters in the database.
     1.5. If the found listings match the user (based on filters), it sends the listing to the user's Telegram chat.
 
     The Telegram bot operates in infinity polling mode:
-    2.1. A user can change filters at any time in dialogue with the Telegram bot; new filters are immediately saved to the corresponding database table for the user. In the next iteration of the parser, the user will receive listings based on the new filters.
+    2.1. A user can change filters at any time in dialogue with the Telegram bot; new filters are immediately saved 
+    to the corresponding database table for the user. In the next iteration of the parser, the user will receive 
+    listings based on the new filters.
 
 The entire bot is written in Python 3.10.12 \
 Utilizes <a href=https://python-poetry.org/>Poetry</a> as a package manager for Python. \
@@ -115,10 +117,10 @@ telegram_bot - Directory containing Telegram bot logic
 
 
 ## 🎈 Usage <a name = "usage"></a>
-
+Find this bot on Telegram by its name
+`@List_House_Search_bot`
 To use the bot, type:
-
-\start
+`\start`
 
 ## 🏁 Getting Started <a name = "getting_started"></a>
 
@@ -126,42 +128,56 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-```
-A Linux machine with: (All examples for ubuntu)
-curl: [sudo apt install curl]
-Docker: look at https://docs.docker.com/engine/install/ubuntu/
-Git: [sudo apt install git-all]
-SQLite3: [sudo apt install sqlite3]
-Telegram bot token from https://core.telegram.org/bots/features#creating-a-new-bot
-```
+A Linux machine with: (All examples for ubuntu) 
+
+1. curl:
+   
+`sudo apt install curl`
+
+2. Docker:
+
+https://docs.docker.com/engine/install/ubuntu/ 
+
+3. Git:
+   
+`sudo apt install git-all` 
+
+4. SQLite3:
+   
+`sudo apt install sqlite3`
+
+5. Telegram bot token from
+   
+https://core.telegram.org/bots/features#creating-a-new-bot
+
 
 ### Installing
 
-Get a copy of the GitHub repository on your machine
+1. Get a copy of the GitHub repository on your machine
 
 ```
 git clone https://github.com/la-strole/list_parser.git
 ```
 
-Set up the Poetry package manager by running the installation command
+2. Set up the Poetry package manager by running the installation command
 
 ```
 curl -sSL https://install.python-poetry.org | python3 -
 ```
 
-Make sure all the project's dependencies are installed by running 'poetry install'
+3. Make sure all the project's dependencies are installed by running 'poetry install'
 
 ```
 ~/.local/bin/poetry install --no-root
 ```
 
-Set up the SQLite database by executing the installation script.
+4. Set up the SQLite database by executing the installation script.
 
 ```
 ./01create_database.sh
 ```
 
-To create your virtual environment variables, you'd make a file named ".env" \
+5. To create your virtual environment variables, you'd make a file named `.env` \
 and add the variables "TLG_BOT_TOKEN" and "LOG_LEVEL".
 
 ```
@@ -169,7 +185,7 @@ TLG_BOT_TOKEN=<YOUR_TOKEN>
 LOG_LEVEL=DEBUG (OR INFO|WARNING|ERROR)
 ```
 
-To run your bot you'd execute the command:
+6. To run your bot you'd execute the command:
 
 ```
 ~/.local/bin/poetry run python main.py
