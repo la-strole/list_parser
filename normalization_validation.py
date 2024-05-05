@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 valid_keys: dict[str, str] = {
     "agent_status": "agent_status",
+    "send_duplicates": "send_duplicates",
     "currancy": "currancy",
     "date_posted": "date_posted",
     "date_updated": "date_updated",

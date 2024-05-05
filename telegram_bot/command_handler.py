@@ -92,6 +92,18 @@ def command_handler(bot: TeleBot):
                     if value == par_name:
                         if par[par_name] is None:
                             msg = msg + f"<b>{key}:</b> не определено\n"
+                        elif par_name in (
+                            "send_duplicates",
+                            "agent_status",
+                            "garage",
+                            "children_allowed",
+                            "animals_allowed",
+                        ):
+                            msg = (
+                                msg + f"<b>{key}:</b> Да"
+                                if par[par_name] == 1
+                                else msg + f"<b>{key}:</b> Нет"
+                            )
                         else:
                             msg = msg + f"<b>{key}:</b> {par[par_name]}\n"
                         break

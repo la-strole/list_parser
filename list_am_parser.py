@@ -161,7 +161,7 @@ def get_candidates_hrefs(
             )
             assert result, (
                 "list_am_parser.py -> get_candidates_hrefs: "
-                f"get_links_and_dates_for_items returns None. url = {url}"
+                f"get_links_and_dates_for_items returns None. url = {url}/{get_params}"
             )
 
             items_list = result[0]
