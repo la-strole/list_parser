@@ -100,9 +100,9 @@ def command_handler(bot: TeleBot):
                             "animals_allowed",
                         ):
                             msg = (
-                                msg + f"<b>{key}:</b> Да"
+                                msg + f"<b>{key}:</b> Да\n"
                                 if par[par_name] == 1
-                                else msg + f"<b>{key}:</b> Нет"
+                                else msg + f"<b>{key}:</b> Нет\n"
                             )
                         else:
                             msg = msg + f"<b>{key}:</b> {par[par_name]}\n"
